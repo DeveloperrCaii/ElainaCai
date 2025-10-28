@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat AI - Elaina Assistant</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --primary-light: #9d4edd;
+            --primary-dark: #7b2cbf;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-light: #64748b;
+            --border-color: #e2e8f0;
+            --user-bubble: #8a2be2;
+            --ai-bubble: #f1f5f9;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --code-bg: #1a1a1a;
+            --code-text: #f8f8f2;
+            --code-line: #343434;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --music-bg: rgba(255, 255, 255, 0.9);
+            --whatsapp-color: #25d366;
+            --telegram-color: #0088cc;
+            --developer-color: #dc2626;
+        }
+
+        .dark-mode {
+            --primary-color: #9d4edd;
+            --primary-light: #b185db;
+            --primary-dark: #8a2be2;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --text-light: #cbd5e1;
+            --border-color: #334155;
+            --user-bubble: #9d4edd;
+            --ai-bubble: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --code-line: #2d2d2d;
+            --music-bg: rgba(30, 41, 59, 0.9);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://files.catbox.moe/4zrnsf.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .dark-mode::before {
+            opacity: 0.1;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--bg-color);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-badge {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .user-badge.developer {
+            background-color: var(--developer-color);
+        }
+
+        .header-button {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.1rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-button:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow);
+        }
+
+        .logout-button {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 1rem;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            display: flex;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            align-self: flex-end;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 0.875rem 1rem;
+            border-radius: 1.125rem;
+            box-shadow: var(--shadow);
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            width: 100%;
+            backdrop-filter: blur(5px);
+            border: 1px solid transparent;
+        }
+
+        .user-message .message-bubble {
+            background: linear-gradient(135deg, var(--user-bubble), var(--primary-light));
+            color: white;
+            border-bottom-right-radius: 0.375rem;
+        }
+
+        .ai-message .message-bubble {
+            background-color: var(--ai-bubble);
+            color: var(--text-color);
+            border-bottom-left-radius: 0.375rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 0.375rem;
+            text-align: right;
+            opacity: 0.8;
+        }
+
+        .ai-message .message-time {
+            text-align: left;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background-color: var(--ai-bubble);
+            padding: 0.875rem 1rem;
+            border-radius: 1.125rem;
+            border-bottom-left-radius: 0.375rem;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.375rem;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-light);
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        .input-container {
+            display: flex;
+            gap: 0.75rem;
+            padding: 1rem;
+            background-color: var(--card-bg);
+            border-radius: 1.125rem;
+            box-shadow: var(--shadow);
+            margin-top: auto;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.875rem;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            resize: none;
+            outline: none;
+            font-size: 1rem;
+            line-height: 1.5;
+            max-height: 120px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .message-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 0.875rem;
+            padding: 0.875rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            min-width: 50px;
+        }
+
+        .send-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--text-light);
+            backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 1.125rem;
+            margin: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .dark-mode .welcome-message {
+            background-color: rgba(30, 41, 59, 0.7);
+        }
+
+        .welcome-title {
+            font-size: 1.75rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-color);
+            font-weight: 700;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-light);
+            font-size: 0.875rem;
+            z-index: 1;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Code block styles */
+        .code-block {
+            margin: 0.875rem 0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-language {
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .copy-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--code-text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .copy-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .copy-button.copied {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .code-content {
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--code-text);
+            white-space: pre;
+            overflow-x: auto;
+            background-color: var(--code-bg);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Music player styles */
+        .music-player {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background-color: var(--music-bg);
+            border-radius: 1.125rem;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            width: 320px;
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(100px) scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .music-player.active {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .music-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .music-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .close-button:hover {
+            background-color: var(--border-color);
+        }
+
+        .track-info {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .track-cover {
+            width: 64px;
+            height: 64px;
+            border-radius: 0.75rem;
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .track-details {
+            flex: 1;
+        }
+
+        .track-name {
+            font-weight: 700;
+            margin-bottom: 0.375rem;
+            font-size: 1rem;
+        }
+
+        .track-artist {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .music-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .control-button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .control-button:hover {
+            color: var(--primary-color);
+            background-color: var(--border-color);
+        }
+
+        .play-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+        }
+
+        .play-button:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 4px;
+            background-color: var(--border-color);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Contact panel styles */
+        .contact-panel {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            background-color: var(--music-bg);
+            border-radius: 1.125rem;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            width: 280px;
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(100px) scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .contact-panel.active {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .contact-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .contact-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.875rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            padding: 0.875rem;
+            border-radius: 0.875rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .contact-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            background-color: var(--card-bg);
+        }
+
+        .contact-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .whatsapp-icon {
+            background: linear-gradient(135deg, var(--whatsapp-color), #128C7E);
+        }
+
+        .telegram-icon {
+            background: linear-gradient(135deg, var(--telegram-color), #0077B5);
+        }
+
+        .channel-icon {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .contact-description {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        /* Clear chat button */
+        .clear-chat-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--error-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .clear-chat-button:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .message {
+                max-width: 90%;
+            }
+            
+            .chat-container {
+                padding: 0.5rem;
+            }
+            
+            .header-controls {
+                gap: 0.5rem;
+            }
+            
+            .user-info {
+                padding: 0.375rem 0.5rem;
+            }
+            
+            .username {
+                display: none;
+            }
+            
+            .input-container {
+                padding: 0.875rem;
+            }
+            
+            .music-player {
+                width: calc(100% - 40px);
+                right: 20px;
+                left: 20px;
+                bottom: 80px;
+            }
+            
+            .contact-panel {
+                width: calc(100% - 40px);
+                left: 20px;
+                bottom: 80px;
+            }
+            
+            .welcome-message {
+                padding: 2rem 1rem;
+                margin: 0.5rem;
+            }
+            
+            .welcome-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 0.875rem 1rem;
+            }
+            
+            .logo-text {
+                font-size: 1.1rem;
+            }
+            
+            .chat-messages {
+                padding: 0.5rem;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">E</div>
+            <div class="logo-text">Elaina Assistant</div>
+        </div>
+        <div class="header-controls">
+            <div class="user-info">
+                <span class="username" id="usernameDisplay">Loading...</span>
+                <span class="user-badge" id="userBadge">User</span>
+            </div>
+            <button class="header-button contact-toggle" id="contactToggle" title="Kontak Developer">📞</button>
+            <button class="header-button music-toggle" id="musicToggle" title="Pemutar Musik">🎵</button>
+            <button class="header-button theme-toggle" id="themeToggle" title="Toggle Theme">🌙</button>
+            <button class="header-button logout-button" id="logoutButton" title="Logout">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 17L21 12L16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <div class="welcome-title">Halo! Saya Elaina, asisten AI Anda 🧠</div>
+                <div class="welcome-subtitle">Silakan tanyakan apa saja yang ingin Anda ketahui. Saya di sini untuk membantu!</div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <textarea class="message-input" id="messageInput" placeholder="Ketik pesan Anda di sini..." rows="1"></textarea>
+            <button class="send-button" id="sendButton" title="Kirim Pesan">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Contact Panel -->
+    <div class="contact-panel" id="contactPanel">
+        <div class="contact-header">
+            <div class="contact-title">Hubungi Developer</div>
+            <button class="close-button" id="closeContact">✕</button>
+        </div>
+        <div class="contact-list">
+            <a href="https://wa.me/6281249864586" target="_blank" class="contact-item">
+                <div class="contact-icon whatsapp-icon">📱</div>
+                <div class="contact-info">
+                    <div class="contact-name">WhatsApp</div>
+                    <div class="contact-description">Chat langsung</div>
+                </div>
+            </a>
+            <a href="https://t.me/Always_Lanz" target="_blank" class="contact-item">
+                <div class="contact-icon telegram-icon">✈️</div>
+                <div class="contact-info">
+                    <div class="contact-name">Telegram</div>
+                    <div class="contact-description">Pesan cepat</div>
+                </div>
+            </a>
+            <a href="https://whatsapp.com/channel/0029Vb597rgFMqreGGaKI22M" target="_blank" class="contact-item">
+                <div class="contact-icon channel-icon">📢</div>
+                <div class="contact-info">
+                    <div class="contact-name">Channel WhatsApp</div>
+                    <div class="contact-description">Update terbaru</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Music Player -->
+    <div class="music-player" id="musicPlayer">
+        <div class="music-header">
+            <div class="music-title">Pemutar Musik</div>
+            <button class="close-button" id="closeMusic">✕</button>
+        </div>
+        <div class="track-info">
+            <img src="https://files.catbox.moe/4zrnsf.jpeg" alt="Album Cover" class="track-cover">
+            <div class="track-details">
+                <div class="track-name" id="currentTrack">Relaxing Vibes</div>
+                <div class="track-artist" id="currentArtist">Elaina AI</div>
+            </div>
+        </div>
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="time-info">
+            <span id="currentTime">0:00</span>
+            <span id="duration">0:00</span>
+        </div>
+        <div class="music-controls">
+            <button class="control-button" id="prevButton" title="Previous">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 20L9 12L19 4V20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="play-button" id="playButton" title="Play/Pause">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="playIcon">
+                    <path d="M5 3L19 12L5 21V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="control-button" id="nextButton" title="Next">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 4L15 12L5 20V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="volume-control">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34836 21.9979 12C21.9979 14.6516 20.9447 17.1947 19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15.54 8.46C16.4774 9.39764 17.004 10.6692 17.004 11.995C17.004 13.3208 16.4774 14.5924 15.54 15.53" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50" title="Volume">
+        </div>
+    </div>
+
+    <div class="footer">
+        Dibuat dengan ❤️ oleh alwayslanz | Elaina AI Assistant v2.0
+    </div>
+
+    <script>
+        // Check authentication and load user info
+        checkAuthStatus();
+
+        // DOM Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const themeToggle = document.getElementById('themeToggle');
+        const musicToggle = document.getElementById('musicToggle');
+        const musicPlayer = document.getElementById('musicPlayer');
+        const closeMusic = document.getElementById('closeMusic');
+        const playButton = document.getElementById('playButton');
+        const playIcon = document.getElementById('playIcon');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = document.getElementById('progressContainer');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const currentTrack = document.getElementById('currentTrack');
+        const currentArtist = document.getElementById('currentArtist');
+        const contactToggle = document.getElementById('contactToggle');
+        const contactPanel = document.getElementById('contactPanel');
+        const closeContact = document.getElementById('closeContact');
+        const logoutButton = document.getElementById('logoutButton');
+        const usernameDisplay = document.getElementById('usernameDisplay');
+        const userBadge = document.getElementById('userBadge');
+
+        // Theme toggle
+        themeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            this.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        });
+
+        // Load saved theme
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+
+        // Contact panel toggle
+        contactToggle.addEventListener('click', function() {
+            contactPanel.classList.toggle('active');
+            if (contactPanel.classList.contains('active')) {
+                musicPlayer.classList.remove('active');
+            }
+        });
+
+        closeContact.addEventListener('click', function() {
+            contactPanel.classList.remove('active');
+        });
+
+        // Music player toggle
+        musicToggle.addEventListener('click', function() {
+            musicPlayer.classList.toggle('active');
+            if (musicPlayer.classList.contains('active')) {
+                contactPanel.classList.remove('active');
+            }
+        });
+
+        closeMusic.addEventListener('click', function() {
+            musicPlayer.classList.remove('active');
+        });
+
+        // Close panels when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!contactPanel.contains(event.target) && !contactToggle.contains(event.target)) {
+                contactPanel.classList.remove('active');
+            }
+            if (!musicPlayer.contains(event.target) && !musicToggle.contains(event.target)) {
+                musicPlayer.classList.remove('active');
+            }
+        });
+
+        // Logout functionality
+        logoutButton.addEventListener('click', async function() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        window.location.href = '/';
+                    } else {
+                        alert('Gagal logout: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('Terjadi kesalahan saat logout');
+                }
+            }
+        });
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                if (!data.isAuthenticated) {
+                    window.location.href = '/';
+                    return;
+                }
+
+                // Display user info
+                usernameDisplay.textContent = data.username;
+                userBadge.textContent = data.isDeveloper ? 'Developer' : 'User';
+                
+                if (data.isDeveloper) {
+                    userBadge.classList.add('developer');
+                }
+
+                // Load chat history
+                loadChatHistory();
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = '/';
+            }
+        }
+
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/api/chat/history');
+                const data = await response.json();
+                
+                const welcomeMessage = chatMessages.querySelector('.welcome-message');
+                if (welcomeMessage && data.messages.length > 0) {
+                    welcomeMessage.remove();
+                }
+                
+                // Add messages to chat
+                data.messages.forEach(message => {
+                    addMessageToChat(message.text, message.role === 'user');
+                });
+                
+                scrollToBottom();
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Send message on Enter (without Shift)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Send message on button click
+        sendButton.addEventListener('click', sendMessage);
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Clear input and reset height
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Add user message to chat
+            addMessageToChat(message, true);
+            
+            // Show typing indicator
+            typingIndicator.classList.add('active');
+            scrollToBottom();
+
+            // Disable input while waiting for response
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                if (data.reply) {
+                    addMessageToChat(data.reply, false);
+                } else if (data.error) {
+                    addMessageToChat('❌ Maaf, terjadi kesalahan: ' + data.error, false);
+                }
+            } catch (error) {
+                addMessageToChat('❌ Maaf, terjadi kesalahan koneksi. Silakan coba lagi.', false);
+                console.error('Chat error:', error);
+            } finally {
+                typingIndicator.classList.remove('active');
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+                scrollToBottom();
+            }
+        }
+
+        function addMessageToChat(message, isUser) {
+            // Remove welcome message if it's the first user message
+            const welcomeMessage = chatMessages.querySelector('.welcome-message');
+            if (welcomeMessage && isUser) {
+                welcomeMessage.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            
+            const messageBubble = document.createElement('div');
+            messageBubble.className = 'message-bubble';
+            messageBubble.textContent = message;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString('id-ID', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            messageDiv.appendChild(messageBubble);
+            messageDiv.appendChild(timeDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+        }
+
+        // Music player functionality
+        const audio = new Audio();
+        let isPlaying = false;
+
+        // Playlist
+        const tracks = [
+            {
+                name: "Relaxing Vibes",
+                artist: "Elaina AI",
+                src: "https://files.catbox.moe/ve0lvk.mp3"
+            }
+        ];
+
+        let currentTrackIndex = 0;
+
+        function loadTrack(index) {
+            const track = tracks[index];
+            currentTrack.textContent = track.name;
+            currentArtist.textContent = track.artist;
+            audio.src = track.src;
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                pauseTrack();
+            } else {
+                playTrack();
+            }
+        }
+
+        function playTrack() {
+            isPlaying = true;
+            playIcon.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="4" width="4" height="16" stroke="currentColor" stroke-width="2"/>
+                    <rect x="14" y="4" width="4" height="16" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            `;
+            audio.play().catch(console.error);
+        }
+
+        function pauseTrack() {
+            isPlaying = false;
+            playIcon.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 3L19 12L5 21V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
+            audio.pause();
+        }
+
+        playButton.addEventListener('click', togglePlay);
+
+        // Previous track
+        prevButton.addEventListener('click', function() {
+            currentTrackIndex--;
+            if (currentTrackIndex < 0) {
+                currentTrackIndex = tracks.length - 1;
+            }
+            loadTrack(currentTrackIndex);
+            if (isPlaying) {
+                playTrack();
+            }
+        });
+
+        // Next track
+        nextButton.addEventListener('click', function() {
+            currentTrackIndex++;
+            if (currentTrackIndex >= tracks.length) {
+                currentTrackIndex = 0;
+            }
+            loadTrack(currentTrackIndex);
+            if (isPlaying) {
+                playTrack();
+            }
+        });
+
+        // Update progress bar
+        audio.addEventListener('timeupdate', function() {
+            const { duration, currentTime } = audio;
+            const progressPercent = (currentTime / duration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            currentTimeEl.textContent = formatTime(currentTime);
+            
+            if (duration) {
+                durationEl.textContent = formatTime(duration);
+            }
+        });
+
+        // Set progress on click
+        progressContainer.addEventListener('click', function(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            
+            audio.currentTime = (clickX / width) * duration;
+        });
+
+        // Volume control
+        volumeSlider.addEventListener('input', function() {
+            audio.volume = this.value / 100;
+        });
+
+        // Format time
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        // Initialize music player
+        loadTrack(currentTrackIndex);
+
+        // Auto-focus on message input
+        messageInput.focus();
+    </script>
+</body>
+</html>
