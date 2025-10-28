@@ -355,6 +355,9 @@
     </div>
 
     <script>
+        // Session management
+        let currentSessionId = localStorage.getItem('sessionId');
+        
         // Check if user is already logged in
         checkAuthStatus();
 
@@ -450,6 +453,12 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Save session ID to localStorage
+                    localStorage.setItem('sessionId', data.sessionId);
+                    localStorage.setItem('username', data.username);
+                    localStorage.setItem('isDeveloper', data.isDeveloper);
+                    currentSessionId = data.sessionId;
+                    
                     showMessage('successMessage', data.message, false);
                     setTimeout(() => {
                         window.location.href = '/chat.html';
@@ -499,6 +508,12 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Save session ID to localStorage
+                    localStorage.setItem('sessionId', data.sessionId);
+                    localStorage.setItem('username', data.username);
+                    localStorage.setItem('isDeveloper', data.isDeveloper);
+                    currentSessionId = data.sessionId;
+                    
                     showMessage('successMessage', data.message, false);
                     setTimeout(() => {
                         window.location.href = '/chat.html';
