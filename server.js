@@ -44,32 +44,28 @@ async function connectDB() {
     await createAdminUser();
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    // Don't exit process for Vercel
+    process.exit(1);
   }
 }
 
 async function createAdminUser() {
-  try {
-    const adminExists = await usersCollection.findOne({ username: process.env.ADMIN_USERNAME || 'admin' });
-    if (!adminExists) {
-      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 10);
-      await usersCollection.insertOne({
-        username: process.env.ADMIN_USERNAME || 'admin',
-        password: hashedPassword,
-        role: 'admin',
-        createdAt: new Date(),
-        isDeveloper: true
-      });
-      console.log('👑 Admin user created');
-    }
-  } catch (error) {
-    console.error('Error creating admin user:', error);
+  const adminExists = await usersCollection.findOne({ username: process.env.ADMIN_USERNAME || 'admin' });
+  if (!adminExists) {
+    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 10);
+    await usersCollection.insertOne({
+      username: process.env.ADMIN_USERNAME || 'admin',
+      password: hashedPassword,
+      role: 'admin',
+      createdAt: new Date(),
+      isDeveloper: true
+    });
+    console.log('👑 Admin user created');
   }
 }
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'main')));
 
 // Session middleware
 app.use(session({
@@ -161,31 +157,11 @@ function blockKey(key) {
   console.log(`API key diblokir: ${key}`);
 }
 
-const GEMINI_MODEL = "gemini-2.0-flash-exp";
+const GEMINI_MODEL = "gemini-2.0-flash";
 
-// Routes - HTML Routes
+// Routes
 app.get('/', (req, res) => {
-  if (req.session.userId) {
-    res.sendFile(path.join(__dirname, 'index.html'));
-  } else {
-    res.sendFile(path.join(__dirname, 'login.html'));
-  }
-});
-
-app.get('/login.html', (req, res) => {
-  if (req.session.userId) {
-    res.redirect('/');
-  } else {
-    res.sendFile(path.join(__dirname, 'login.html'));
-  }
-});
-
-app.get('/index.html', (req, res) => {
-  if (req.session.userId) {
-    res.sendFile(path.join(__dirname, 'index.html'));
-  } else {
-    res.redirect('/login.html');
-  }
+  res.sendFile(path.join(__dirname, 'main', 'index.html'));
 });
 
 // Auth routes
@@ -230,11 +206,7 @@ app.post('/api/register', async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Registrasi berhasil',
-      user: { 
-        username, 
-        role: 'user',
-        isDeveloper: false
-      }
+      user: { username, role: 'user' }
     });
     
   } catch (error) {
@@ -509,28 +481,16 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Handle 404 for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'API endpoint tidak ditemukan' });
-});
-
-// Handle all other routes - serve HTML
-app.get('*', (req, res) => {
-  if (req.session.userId) {
-    res.sendFile(path.join(__dirname, 'index.html'));
-  } else {
-    res.sendFile(path.join(__dirname, 'login.html'));
-  }
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint tidak ditemukan' });
 });
 
 // Initialize database and start server
 connectDB().then(() => {
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, () => {
     console.log(`🚀 Elaina AI Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`👑 Admin username: ${process.env.ADMIN_USERNAME || 'admin'}`);
   });
-}).catch(error => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
 });
