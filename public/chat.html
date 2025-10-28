@@ -226,14 +226,15 @@
         }
 
         .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: calc(100vh - 120px);
-            overflow: hidden;
-            z-index: 1;
-        }
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+    z-index: 1;
+    position: relative; /* Tambahkan ini */
+}
 
         .chat-messages {
             flex: 1;
@@ -362,18 +363,20 @@
         }
 
         .input-container {
-            display: flex;
-            gap: 0.5rem;
-            padding: 0.75rem;
-            background-color: var(--card-bg);
-            box-shadow: var(--shadow);
-            margin-top: auto;
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border-color);
-            flex-shrink: 0;
-            min-height: 70px;
-            align-items: flex-end;
-        }
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow);
+    margin-top: auto;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+    min-height: 70px;
+    align-items: flex-end;
+    position: relative; /* Tambahkan ini */
+    z-index: 100; /* Tambahkan ini */
+}
 
         .message-input {
             flex: 1;
@@ -462,19 +465,20 @@
         }
 
         .footer {
-            text-align: center;
-            padding: 0.75rem;
-            color: var(--text-light);
-            font-size: 0.8rem;
-            z-index: 1;
-            background-color: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-            flex-shrink: 0;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    text-align: center;
+    padding: 0.75rem;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    z-index: 1; /* Pastikan lebih rendah dari input-container */
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* Tambahkan ini */
+}
 
         /* Code block styles */
         .code-block {
@@ -1045,8 +1049,8 @@
             }
             
             .input-container {
-                min-height: 60px;
-                padding: 0.5rem;
+                z-index: 100;
+                position: relative;
             }
             
             /* PERBAIKAN: Tombol tetap besar di landscape */
@@ -1066,6 +1070,34 @@
                 min-height: 44px;
             }
         }
+        
+        @media (max-width: 768px) {
+    .chat-container {
+        height: calc(100vh - 110px);
+    }
+    
+    .input-container {
+        z-index: 100; /* Pastikan tetap di atas di mobile */
+        position: relative;
+    }
+    
+    .footer {
+        z-index: 1; /* Pastikan tetap di bawah di mobile */
+        position: relative;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-container {
+        height: calc(100vh - 100px);
+    }
+    
+    .input-container {
+        padding: 0.75rem;
+        min-height: 80px;
+        z-index: 100;
+    }
+}
 
         /* Prevent text selection on most elements */
         .logo, .user-info, .header-button, .message-time, .typing-indicator, .contact-item, .music-controls {
@@ -1078,49 +1110,6 @@
             -webkit-user-select: text;
             user-select: text;
         }
-        
-        /* === FIX agar kolom chat tidak tenggelam di mobile === */
-@media (max-width: 768px) {
-  html, body {
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .chat-container {
-    height: calc(100vh - 120px);
-    display: flex;
-    flex-direction: column;
-  }
-
-  .chat-messages {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-  }
-
-  /* Trik penting: biar input selalu di atas keyboard */
-  .input-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 99;
-    background-color: var(--card-bg);
-    border-top: 1px solid var(--border-color);
-  }
-
-  /* Biar chat tidak tertutup input */
-  .chat-messages {
-    padding-bottom: 90px !important;
-  }
-
-  /* Biar footer tetap di bawah */
-  .footer {
-    position: relative;
-    bottom: 0;
-  }
-}
     </style>
 </head>
 <body>
