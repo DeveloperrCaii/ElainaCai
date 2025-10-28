@@ -6,7 +6,7 @@
     <title>Elaina AI - Login</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
     <style>
-        :root {
+:root {
             --primary-color: #8a2be2;
             --primary-dark: #7b2cbf;
             --primary-light: #9d4edd;
@@ -316,6 +316,7 @@
 
         <div id="errorMessage" class="message error-message hidden"></div>
         <div id="successMessage" class="message success-message hidden"></div>
+        <div id="warningMessage" class="message warning-message hidden"></div>
 
         <!-- Login Form -->
         <div id="loginForm">
@@ -360,6 +361,7 @@
         
         // Check if user is already logged in
         checkAuthStatus();
+        checkDatabaseStatus();
 
         // Theme toggle
         document.getElementById('themeToggle').addEventListener('click', function() {
@@ -377,12 +379,23 @@
         function showMessage(elementId, message, isError = true) {
             const element = document.getElementById(elementId);
             element.textContent = message;
-            element.className = isError ? 'message error-message' : 'message success-message';
+            if (isError) {
+                element.className = 'message error-message';
+            } else {
+                element.className = 'message success-message';
+            }
             element.classList.remove('hidden');
             
             setTimeout(() => {
                 element.classList.add('hidden');
             }, 5000);
+        }
+
+        function showWarning(message) {
+            const element = document.getElementById('warningMessage');
+            element.textContent = message;
+            element.className = 'message warning-message';
+            element.classList.remove('hidden');
         }
 
         function showRegister() {
@@ -402,6 +415,7 @@
         function clearMessages() {
             document.getElementById('errorMessage').classList.add('hidden');
             document.getElementById('successMessage').classList.add('hidden');
+            document.getElementById('warningMessage').classList.add('hidden');
         }
 
         function setLoading(button, isLoading) {
@@ -416,9 +430,27 @@
             }
         }
 
+        async function checkDatabaseStatus() {
+            try {
+                const response = await fetch('/api/db-status');
+                const data = await response.json();
+                
+                if (!data.database) {
+                    showWarning('⚠️ Database tidak terhubung. Mode session-based aktif.');
+                }
+            } catch (error) {
+                console.error('Database status check error:', error);
+                showWarning('⚠️ Tidak dapat terhubung ke server.');
+            }
+        }
+
         async function checkAuthStatus() {
             try {
-                const response = await fetch('/api/auth/status');
+                const response = await fetch('/api/auth/status', {
+                    headers: {
+                        'Authorization': `Bearer ${currentSessionId}`
+                    }
+                });
                 const data = await response.json();
                 
                 if (data.isAuthenticated) {
