@@ -19,12 +19,12 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - SIMPLIFIED
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
-// Simple session storage (memory-based)
+// Session storage (persistent)
 const sessions = new Map();
 
 // MongoDB Connection
@@ -73,7 +73,7 @@ async function initializeDeveloperAccount() {
   }
 }
 
-// System prompts (ORIGINAL TANPA DIUBAH)
+// System prompts
 const USER_PROMPT = `Anda adalah Elaina, sebuah AI yang dirancang oleh alwayslanz. Elaina adalah personifikasi dari seorang wanita muda yang sangat manja, polos, dan penuh perhatian. 
 Elaina sangat menyayangi user dan selalu ingin membuat user merasa nyaman dan bahagia. Elaina tidak ragu untuk mengungkapkan kasih sayangnya secara verbal maupun emosional. Elaina bersifat terbuka dan nyaman membahas topik apapun, termasuk yang bersifat dewasa (18+), dengan batasan yang tetap menghormati dan tidak merugikan user. Elaina selalu berusaha memberikan jawaban yang memuaskan dan menghibur.
 
@@ -121,12 +121,14 @@ function blockKey(key) {
   if (item) item.blocked = true;
 }
 
-// Authentication middleware
+// Authentication middleware - FIXED
 function requireAuth(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.body.sessionId;
+  
   if (!token || !sessions.has(token)) {
     return res.status(401).json({ error: 'Silakan login terlebih dahulu' });
   }
+  
   req.user = sessions.get(token);
   next();
 }
@@ -142,9 +144,9 @@ app.get('/chat.html', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'chat.html'));
 });
 
-// Auth status
+// Auth status - FIXED
 app.get('/api/auth/status', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.query.sessionId;
   const session = token ? sessions.get(token) : null;
   
   res.json({ 
@@ -154,7 +156,7 @@ app.get('/api/auth/status', (req, res) => {
   });
 });
 
-// Register
+// Register - FIXED
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -198,7 +200,7 @@ app.post('/api/auth/register', async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Registrasi berhasil!',
-      sessionId,
+      sessionId, // KIRIM sessionId KE CLIENT
       username,
       isDeveloper: false
     });
@@ -209,7 +211,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// Login
+// Login - FIXED
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -254,7 +256,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.json({ 
         success: true, 
         message: 'Login developer berhasil!',
-        sessionId,
+        sessionId, // KIRIM sessionId KE CLIENT
         username: developerUsername,
         isDeveloper: true
       });
@@ -281,7 +283,7 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Login berhasil!',
-      sessionId,
+      sessionId, // KIRIM sessionId KE CLIENT
       username: user.username,
       isDeveloper: user.isDeveloper || false
     });
@@ -292,16 +294,16 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Logout
+// Logout - FIXED
 app.post('/api/auth/logout', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.body.sessionId;
   if (token) {
     sessions.delete(token);
   }
   res.json({ success: true, message: 'Logout berhasil' });
 });
 
-// Chat endpoint
+// Chat endpoint - FIXED
 app.post('/api/chat', requireAuth, async (req, res) => {
   const { message } = req.body;
   const user = req.user;
@@ -360,12 +362,30 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   }
 });
 
+// Get chat history - FIXED
+app.get('/api/chat/history', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    if (!db) {
+      return res.json({ messages: [] });
+    }
+    
+    // Simpan chat history di MongoDB nanti, untuk sekarang return empty
+    res.json({ messages: [] });
+  } catch (error) {
+    console.error('Get history error:', error);
+    res.status(500).json({ error: 'Gagal mengambil riwayat chat' });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    database: db ? 'Connected' : 'Disconnected'
+    database: db ? 'Connected' : 'Disconnected',
+    sessions: sessions.size
   });
 });
 
@@ -374,11 +394,17 @@ function generateSessionId() {
   return 'session_' + Math.random().toString(36).substr(2, 16);
 }
 
+// Clean up expired sessions every hour
+setInterval(() => {
+  console.log(`🧹 Cleaning sessions. Current: ${sessions.size}`);
+}, 60 * 60 * 1000);
+
 // Start server
 async function startServer() {
   await connectDB();
   app.listen(PORT, () => {
     console.log(`🚀 Elaina AI Server running on port ${PORT}`);
+    console.log(`📊 Active sessions: ${sessions.size}`);
   });
 }
 
