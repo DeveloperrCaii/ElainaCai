@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#8a2be2">
     <title>Chat AI - Elaina Assistant</title>
     <style>
         :root {
@@ -53,13 +52,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             -webkit-tap-highlight-color: transparent;
             -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-        }
-
-        html, body {
-            touch-action: pan-x pan-y;
-            height: 100%;
-            overflow: hidden;
+            touch-action: manipulation;
         }
 
         body {
@@ -71,6 +64,8 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         body::before {
@@ -97,7 +92,6 @@
             display: none;
             flex-direction: column;
             height: 100vh;
-            height: 100dvh; /* Dynamic viewport height for mobile */
         }
 
         header {
@@ -109,7 +103,6 @@
             align-items: center;
             z-index: 10;
             backdrop-filter: blur(10px);
-            min-height: 60px;
         }
 
         .logo {
@@ -128,29 +121,18 @@
             justify-content: center;
             color: white;
             font-weight: bold;
-            flex-shrink: 0;
         }
 
         .logo-text {
             font-weight: 700;
             font-size: 1.25rem;
-            white-space: nowrap;
         }
 
         .user-info {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
             color: var(--text-light);
-            flex-shrink: 1;
-            min-width: 0;
-        }
-
-        .username {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 120px;
         }
 
         .developer-badge {
@@ -160,15 +142,12 @@
             border-radius: 0.25rem;
             font-size: 0.75rem;
             font-weight: 600;
-            white-space: nowrap;
-            flex-shrink: 0;
         }
 
         .header-controls {
             display: flex;
-            gap: 0.75rem;
+            gap: 1rem;
             align-items: center;
-            flex-shrink: 0;
         }
 
         .theme-toggle, .music-toggle, .contact-toggle, .history-toggle, .logout-button {
@@ -181,9 +160,6 @@
             align-items: center;
             justify-content: center;
             transition: transform 0.3s;
-            padding: 0.25rem;
-            min-width: 40px;
-            min-height: 40px;
         }
 
         .theme-toggle:hover, .music-toggle:hover, .contact-toggle:hover, .history-toggle:hover, .logout-button:hover {
@@ -200,7 +176,6 @@
             padding: 1rem;
             overflow: hidden;
             z-index: 1;
-            height: calc(100vh - 120px);
         }
 
         .chat-messages {
@@ -211,15 +186,12 @@
             flex-direction: column;
             gap: 1.5rem;
             margin-bottom: 1rem;
-            -webkit-overflow-scrolling: touch;
         }
 
         .message {
             display: flex;
             max-width: 85%;
             animation: fadeIn 0.3s ease-in-out;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
         }
 
         @keyframes fadeIn {
@@ -263,7 +235,6 @@
             color: var(--text-light);
             margin-top: 0.25rem;
             text-align: right;
-            opacity: 0.8;
         }
 
         .ai-message .message-time {
@@ -312,7 +283,6 @@
             box-shadow: var(--shadow);
             margin-top: auto;
             backdrop-filter: blur(10px);
-            min-height: 70px;
         }
 
         .message-input {
@@ -328,7 +298,7 @@
             line-height: 1.5;
             max-height: 120px;
             transition: border-color 0.2s;
-            font-family: inherit;
+            -webkit-appearance: none;
         }
 
         .message-input:focus {
@@ -346,8 +316,6 @@
             align-items: center;
             justify-content: center;
             transition: background-color 0.2s, transform 0.1s;
-            min-width: 50px;
-            flex-shrink: 0;
         }
 
         .send-button:hover {
@@ -390,7 +358,6 @@
             color: var(--text-light);
             font-size: 0.875rem;
             z-index: 1;
-            flex-shrink: 0;
         }
 
         /* Code block styles */
@@ -451,7 +418,6 @@
             white-space: pre;
             overflow-x: auto;
             background-color: var(--code-bg);
-            -webkit-overflow-scrolling: touch;
         }
 
         /* History Panel */
@@ -480,7 +446,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-shrink: 0;
         }
 
         .history-title {
@@ -493,14 +458,12 @@
             color: var(--text-color);
             cursor: pointer;
             font-size: 1.25rem;
-            padding: 0.25rem;
         }
 
         .history-content {
             flex: 1;
             overflow-y: auto;
             padding: 1rem;
-            -webkit-overflow-scrolling: touch;
         }
 
         .session-item {
@@ -510,7 +473,6 @@
             margin-bottom: 0.5rem;
             cursor: pointer;
             transition: background-color 0.2s;
-            word-break: break-word;
         }
 
         .session-item:hover {
@@ -547,7 +509,6 @@
             flex-direction: column;
             gap: 0.75rem;
             max-width: 300px;
-            width: calc(100vw - 2rem);
         }
 
         .music-player.active {
@@ -557,9 +518,6 @@
         .music-title {
             font-weight: 600;
             font-size: 0.875rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .music-controls {
@@ -577,8 +535,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0.25rem;
-            min-width: 30px;
         }
 
         .music-progress {
@@ -635,7 +591,6 @@
             color: var(--text-color);
             cursor: pointer;
             font-size: 1.25rem;
-            padding: 0.25rem;
         }
 
         .contact-links {
@@ -653,7 +608,6 @@
             text-decoration: none;
             color: var(--text-color);
             transition: background-color 0.2s;
-            word-break: break-word;
         }
 
         .contact-link:hover {
@@ -669,7 +623,6 @@
             font-weight: bold;
             border-radius: 0.25rem;
             font-size: 0.875rem;
-            flex-shrink: 0;
         }
 
         .whatsapp { background-color: var(--whatsapp-color); color: white; }
@@ -693,45 +646,8 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            header {
-                padding: 1rem;
-            }
-            
-            .logo-text {
-                font-size: 1.1rem;
-            }
-            
-            .user-info {
-                gap: 0.5rem;
-            }
-            
-            .username {
-                max-width: 80px;
-                font-size: 0.9rem;
-            }
-            
-            .header-controls {
-                gap: 0.5rem;
-            }
-            
-            .theme-toggle, .music-toggle, .contact-toggle, .history-toggle, .logout-button {
-                font-size: 1.1rem;
-                min-width: 35px;
-                min-height: 35px;
-            }
-            
             .message {
-                max-width: 90%;
-            }
-            
-            .chat-container {
-                padding: 0.5rem;
-                height: calc(100vh - 110px);
-            }
-            
-            .chat-messages {
-                padding: 0.5rem;
-                gap: 1rem;
+                max-width: 95%;
             }
             
             .history-panel {
@@ -744,23 +660,9 @@
                 width: calc(100% - 2rem);
                 max-width: none;
             }
-            
-            .input-container {
-                padding: 0.75rem;
-            }
-        }
 
-        @media (max-width: 480px) {
-            .username {
-                display: none;
-            }
-            
-            .message {
-                max-width: 95%;
-            }
-            
-            .message-bubble {
-                padding: 0.6rem 0.8rem;
+            .message-input {
+                font-size: 16px; /* Prevent zoom on iOS */
             }
         }
 
@@ -778,15 +680,6 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        /* Prevent text selection on interactive elements */
-        .theme-toggle, .music-toggle, .contact-toggle, .history-toggle, .logout-button,
-        .send-button, .music-button, .copy-button, .close-history, .close-contact {
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
     </style>
 </head>
 <body>
@@ -799,25 +692,25 @@
             </div>
             
             <div class="user-info">
-                <span class="username" id="userGreeting">Halo, User!</span>
+                <span id="userGreeting">Halo, User!</span>
                 <div class="developer-badge" id="developerBadge" style="display: none;">Developer</div>
             </div>
             
             <div class="header-controls">
-                <button class="history-toggle" id="historyToggle" title="Riwayat Chat" aria-label="Riwayat Chat">
-                    📚
+                <button class="history-toggle" id="historyToggle" title="Riwayat Chat">
+                    <i>📚</i>
                 </button>
-                <button class="contact-toggle" id="contactToggle" title="Kontak" aria-label="Kontak">
-                    👤
+                <button class="contact-toggle" id="contactToggle" title="Kontak">
+                    <i>👤</i>
                 </button>
-                <button class="music-toggle" id="musicToggle" title="Musik" aria-label="Musik">
-                    🎵
+                <button class="music-toggle" id="musicToggle" title="Musik">
+                    <i>🎵</i>
                 </button>
-                <button class="theme-toggle" id="themeToggle" title="Ubah Tema" aria-label="Ubah Tema">
-                    🌙
+                <button class="theme-toggle" id="themeToggle" title="Ubah Tema">
+                    <i>🌙</i>
                 </button>
-                <button class="logout-button" id="logoutButton" title="Logout" aria-label="Logout">
-                    🚪
+                <button class="logout-button" id="logoutButton" title="Logout">
+                    <i>🚪</i>
                 </button>
             </div>
         </header>
@@ -825,11 +718,11 @@
         <div class="chat-container">
             <div class="chat-messages" id="chatMessages">
                 <div class="welcome-message">
-                    <div class="welcome-title">Halo! Saya Elaina 🤍</div>
-                    <p>Saya di sini untuk membantu Anda. Silakan tanyakan apa saja!</p>
+                    <div class="welcome-title">Selamat Datang di Elaina AI Assistant! 👋</div>
+                    <p>Saya siap membantu Anda dengan berbagai pertanyaan dan tugas. Silakan mulai percakapan!</p>
                 </div>
             </div>
-
+            
             <div class="typing-indicator" id="typingIndicator">
                 <div class="typing-dots">
                     <div class="typing-dot"></div>
@@ -837,23 +730,22 @@
                     <div class="typing-dot"></div>
                 </div>
             </div>
-
+            
             <div class="input-container">
                 <textarea 
                     class="message-input" 
                     id="messageInput" 
-                    placeholder="Ketik pesan Anda di sini..." 
+                    placeholder="Ketik pesan Anda di sini..."
                     rows="1"
-                    aria-label="Pesan untuk Elaina AI"
                 ></textarea>
-                <button class="send-button" id="sendButton" aria-label="Kirim pesan">
-                    📤
+                <button class="send-button" id="sendButton">
+                    <i>➤</i>
                 </button>
             </div>
         </div>
 
         <div class="footer">
-            Dibuat dengan ❤️ oleh alwayslanz | Elaina AI Assistant
+            <p>© 2024 Elaina AI Assistant. Dibuat dengan ❤️ oleh Developer</p>
         </div>
     </div>
 
@@ -861,22 +753,22 @@
     <div class="history-panel" id="historyPanel">
         <div class="history-header">
             <div class="history-title">Riwayat Chat</div>
-            <button class="close-history" id="closeHistory" aria-label="Tutup riwayat">✕</button>
+            <button class="close-history" id="closeHistory">✕</button>
         </div>
         <div class="history-content" id="historyContent">
-            <!-- Session items will be loaded here -->
+            <!-- History items will be populated here -->
         </div>
     </div>
 
     <!-- Music Player -->
     <div class="music-player" id="musicPlayer">
-        <div class="music-title">Background Music</div>
+        <div class="music-title" id="musicTitle">Musik Latar</div>
         <div class="music-controls">
-            <button class="music-button" id="prevMusic" aria-label="Lagu sebelumnya">⏮</button>
-            <button class="music-button" id="playPauseMusic" aria-label="Putar/Jeda">▶️</button>
-            <button class="music-button" id="nextMusic" aria-label="Lagu berikutnya">⏭</button>
+            <button class="music-button" id="prevMusic">⏮</button>
+            <button class="music-button" id="playPauseMusic">▶️</button>
+            <button class="music-button" id="nextMusic">⏭</button>
             <div class="music-progress">
-                <div class="music-progress-bar" id="musicProgress"></div>
+                <div class="music-progress-bar" id="musicProgressBar"></div>
             </div>
         </div>
     </div>
@@ -885,16 +777,16 @@
     <div class="contact-panel" id="contactPanel">
         <div class="contact-header">
             <div class="contact-title">Kontak Developer</div>
-            <button class="close-contact" id="closeContact" aria-label="Tutup kontak">✕</button>
+            <button class="close-contact" id="closeContact">✕</button>
         </div>
         <div class="contact-links">
-            <a href="https://wa.me/6281234567890" class="contact-link" target="_blank" rel="noopener">
-                <div class="contact-icon whatsapp">WA</div>
+            <a href="https://wa.me/6281234567890" class="contact-link" target="_blank">
+                <div class="contact-icon whatsapp">W</div>
                 <span>WhatsApp: +62 812-3456-7890</span>
             </a>
-            <a href="https://t.me/alwayslanz" class="contact-link" target="_blank" rel="noopener">
-                <div class="contact-icon telegram">TG</div>
-                <span>Telegram: @alwayslanz</span>
+            <a href="https://t.me/username" class="contact-link" target="_blank">
+                <div class="contact-icon telegram">T</div>
+                <span>Telegram: @username</span>
             </a>
         </div>
     </div>
@@ -903,468 +795,592 @@
     <div class="overlay" id="overlay"></div>
 
     <script>
-        // DOM Elements
-        const appContainer = document.getElementById('appContainer');
-        const userGreeting = document.getElementById('userGreeting');
-        const developerBadge = document.getElementById('developerBadge');
-        const chatMessages = document.getElementById('chatMessages');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        const typingIndicator = document.getElementById('typingIndicator');
-        const themeToggle = document.getElementById('themeToggle');
-        const musicToggle = document.getElementById('musicToggle');
-        const contactToggle = document.getElementById('contactToggle');
-        const historyToggle = document.getElementById('historyToggle');
-        const logoutButton = document.getElementById('logoutButton');
-        const historyPanel = document.getElementById('historyPanel');
-        const closeHistory = document.getElementById('closeHistory');
-        const historyContent = document.getElementById('historyContent');
-        const musicPlayer = document.getElementById('musicPlayer');
-        const contactPanel = document.getElementById('contactPanel');
-        const closeContact = document.getElementById('closeContact');
-        const overlay = document.getElementById('overlay');
+    // DOM Elements
+const appContainer = document.getElementById('appContainer');
+const chatMessages = document.getElementById('chatMessages');
+const messageInput = document.getElementById('messageInput');
+const sendButton = document.getElementById('sendButton');
+const typingIndicator = document.getElementById('typingIndicator');
+const themeToggle = document.getElementById('themeToggle');
+const musicToggle = document.getElementById('musicToggle');
+const contactToggle = document.getElementById('contactToggle');
+const historyToggle = document.getElementById('historyToggle');
+const logoutButton = document.getElementById('logoutButton');
+const userGreeting = document.getElementById('userGreeting');
+const developerBadge = document.getElementById('developerBadge');
 
-        // State variables
-        let currentSessionId = null;
-        let isDeveloper = false;
-        let currentTheme = localStorage.getItem('theme') || 'light';
-        let isMusicPlaying = false;
-        let currentAudio = null;
+// Panel elements
+const historyPanel = document.getElementById('historyPanel');
+const closeHistory = document.getElementById('closeHistory');
+const historyContent = document.getElementById('historyContent');
+const musicPlayer = document.getElementById('musicPlayer');
+const playPauseMusic = document.getElementById('playPauseMusic');
+const prevMusic = document.getElementById('prevMusic');
+const nextMusic = document.getElementById('nextMusic');
+const musicProgressBar = document.getElementById('musicProgressBar');
+const musicTitle = document.getElementById('musicTitle');
+const contactPanel = document.getElementById('contactPanel');
+const closeContact = document.getElementById('closeContact');
+const overlay = document.getElementById('overlay');
 
-        // Background music tracks
-        const musicTracks = [
-            'https://files.catbox.moe/8y8a5f.mp3',
-            'https://files.catbox.moe/zb4q6a.mp3',
-            'https://files.catbox.moe/3m9p8r.mp3'
-        ];
-        let currentTrackIndex = 0;
+// State variables
+let currentTheme = localStorage.getItem('theme') || 'light';
+let isMusicPlaying = false;
+let currentMusicIndex = 0;
+let chatHistory = [];
+let currentSession = [];
+let isDeveloper = false;
 
-        // Prevent zoom on double-tap
-        document.addEventListener('dblclick', (e) => {
+// Music playlist
+const musicPlaylist = [
+    {
+        title: "Lofi Study Beats",
+        url: "https://files.catbox.moe/9m8y9f.mp3"
+    },
+    {
+        title: "Chill Vibes",
+        url: "https://files.catbox.moe/x7j2p0.mp3"
+    },
+    {
+        title: "Relaxing Piano",
+        url: "https://files.catbox.moe/6b3p9s.mp3"
+    }
+];
+
+const audio = new Audio();
+
+// Initialize the application
+function initApp() {
+    checkAuth();
+    initTheme();
+    loadChatHistory();
+    setupEventListeners();
+    autoResizeTextarea();
+}
+
+// Check authentication
+function checkAuth() {
+    const token = localStorage.getItem('authToken');
+    const user = localStorage.getItem('currentUser');
+    
+    if (!token || !user) {
+        window.location.href = '/login.html';
+        return;
+    }
+    
+    try {
+        const userData = JSON.parse(user);
+        userGreeting.textContent = `Halo, ${userData.username}!`;
+        isDeveloper = userData.role === 'developer';
+        
+        if (isDeveloper) {
+            developerBadge.style.display = 'block';
+        }
+        
+        appContainer.style.display = 'flex';
+    } catch (error) {
+        console.error('Error parsing user data:', error);
+        logout();
+    }
+}
+
+// Initialize theme
+function initTheme() {
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeToggle.innerHTML = '☀️';
+    } else {
+        document.body.classList.remove('dark-mode');
+        themeToggle.innerHTML = '🌙';
+    }
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Message input and sending
+    messageInput.addEventListener('input', autoResizeTextarea);
+    messageInput.addEventListener('keypress', handleKeyPress);
+    sendButton.addEventListener('click', sendMessage);
+    
+    // Theme toggle
+    themeToggle.addEventListener('click', toggleTheme);
+    
+    // Music player
+    musicToggle.addEventListener('click', toggleMusicPlayer);
+    playPauseMusic.addEventListener('click', toggleMusic);
+    prevMusic.addEventListener('click', playPreviousMusic);
+    nextMusic.addEventListener('click', playNextMusic);
+    
+    // Panels
+    contactToggle.addEventListener('click', () => togglePanel(contactPanel));
+    historyToggle.addEventListener('click', () => togglePanel(historyPanel));
+    closeHistory.addEventListener('click', () => togglePanel(historyPanel));
+    closeContact.addEventListener('click', () => togglePanel(contactPanel));
+    overlay.addEventListener('click', closeAllPanels);
+    
+    // Logout
+    logoutButton.addEventListener('click', logout);
+    
+    // Audio events
+    audio.addEventListener('timeupdate', updateMusicProgress);
+    audio.addEventListener('ended', playNextMusic);
+    audio.addEventListener('loadedmetadata', () => {
+        musicTitle.textContent = musicPlaylist[currentMusicIndex].title;
+    });
+    
+    // Prevent zoom on double tap
+    document.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
             e.preventDefault();
-        }, { passive: false });
+        }
+    }, { passive: false });
 
-        // Prevent context menu
-        document.addEventListener('contextmenu', (e) => {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
             e.preventDefault();
-        });
-
-        // Initialize theme
-        function initTheme() {
-            if (currentTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                themeToggle.textContent = '☀️';
-            } else {
-                document.body.classList.remove('dark-mode');
-                themeToggle.textContent = '🌙';
-            }
         }
+        lastTouchEnd = now;
+    }, false);
+}
 
-        // Check authentication status on page load
-        async function checkAuth() {
-            try {
-                const response = await fetch('/api/check-auth');
-                const data = await response.json();
-                
-                if (data.authenticated) {
-                    showApp(data.user);
-                } else {
-                    // Redirect to login page if not authenticated
-                    window.location.href = '/login.html';
-                }
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                window.location.href = '/login.html';
-            }
-        }
+// Auto-resize textarea
+function autoResizeTextarea() {
+    messageInput.style.height = 'auto';
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+}
 
-        // Show main app
-        function showApp(user) {
-            appContainer.style.display = 'flex';
-            
-            userGreeting.textContent = `Halo, ${user.username}!`;
-            isDeveloper = user.isDeveloper || user.role === 'admin';
-            
-            if (isDeveloper) {
-                developerBadge.style.display = 'block';
-            }
-            
-            // Load chat history
-            loadChatHistory();
-        }
+// Handle Enter key press
+function handleKeyPress(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+}
 
-        // Load chat history
-        async function loadChatHistory(sessionId = null) {
-            try {
-                const url = sessionId ? `/api/chat-history?sessionId=${sessionId}` : '/api/chat-history';
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.chats && data.chats.length > 0) {
-                    displayChatHistory(data.chats);
-                    if (!sessionId) {
-                        currentSessionId = data.chats[0].sessionId;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading chat history:', error);
-            }
-        }
+// Send message function
+async function sendMessage() {
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessageToChat(message, 'user');
+    messageInput.value = '';
+    autoResizeTextarea();
+    sendButton.disabled = true;
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    try {
+        // Simulate API call
+        const response = await simulateAIResponse(message);
+        
+        // Hide typing indicator
+        hideTypingIndicator();
+        
+        // Add AI response to chat
+        addMessageToChat(response, 'ai');
+        
+        // Save to current session
+        saveToCurrentSession(message, response);
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        hideTypingIndicator();
+        addMessageToChat('Maaf, terjadi kesalahan. Silakan coba lagi.', 'ai');
+    }
+    
+    sendButton.disabled = false;
+}
 
-        // Display chat history
-        function displayChatHistory(chats) {
-            chatMessages.innerHTML = '';
-            
-            if (chats.length === 0) {
-                chatMessages.innerHTML = `
-                    <div class="welcome-message">
-                        <div class="welcome-title">Halo! Saya Elaina 🤍</div>
-                        <p>Saya di sini untuk membantu Anda. Silakan tanyakan apa saja!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            chats.forEach(chat => {
-                addMessageToChat(chat.message, chat.role, new Date(chat.timestamp));
-            });
-            
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+// Add message to chat
+function addMessageToChat(message, sender) {
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${sender}-message`;
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    
+    // Process message for code blocks and formatting
+    const processedMessage = processMessage(message);
+    bubble.innerHTML = processedMessage;
+    
+    const timeElement = document.createElement('div');
+    timeElement.className = 'message-time';
+    timeElement.textContent = getCurrentTime();
+    
+    messageElement.appendChild(bubble);
+    messageElement.appendChild(timeElement);
+    
+    chatMessages.appendChild(messageElement);
+    scrollToBottom();
+    
+    // Add copy functionality to code blocks
+    if (sender === 'ai') {
+        setTimeout(() => {
+            addCopyButtonsToCodeBlocks();
+        }, 100);
+    }
+}
 
-        // Add message to chat
-        function addMessageToChat(message, role, timestamp = new Date()) {
-            const messageElement = document.createElement('div');
-            messageElement.className = `message ${role}-message`;
-            
-            const timeString = timestamp.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            
-            // Process message for code blocks
-            const processedMessage = processMessageContent(message);
-            
-            messageElement.innerHTML = `
-                <div class="message-bubble">
-                    ${processedMessage}
-                    <div class="message-time">${timeString}</div>
+// Process message for code blocks and formatting
+function processMessage(message) {
+    // Handle code blocks
+    let processed = message.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+        const lang = language || 'text';
+        return `
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-language">${lang}</span>
+                    <button class="copy-button" onclick="copyCode(this)">
+                        <span>📋</span> Salin
+                    </button>
                 </div>
-            `;
-            
-            chatMessages.appendChild(messageElement);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+                <div class="code-content">${escapeHtml(code.trim())}</div>
+            </div>
+        `;
+    });
+    
+    // Handle inline code
+    processed = processed.replace(/`([^`]+)`/g, '<code style="background: var(--border-color); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace;">$1</code>');
+    
+    // Handle line breaks
+    processed = processed.replace(/\n/g, '<br>');
+    
+    return processed;
+}
 
-        // Process message content for code blocks
-        function processMessageContent(message) {
-            // Simple code block detection and formatting
-            const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-            return message.replace(codeBlockRegex, (match, language, code) => {
-                const lang = language || 'text';
-                return `
-                    <div class="code-block">
-                        <div class="code-header">
-                            <span class="code-language">${lang}</span>
-                            <button class="copy-button" onclick="copyCode(this)">
-                                <span>📋</span>
-                                <span class="copy-text">Salin</span>
-                            </button>
-                        </div>
-                        <div class="code-content">${escapeHtml(code.trim())}</div>
-                    </div>
-                `;
-            });
-        }
+// Escape HTML for code blocks
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
-        // Escape HTML for code blocks
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Copy code to clipboard
-        function copyCode(button) {
-            const codeContent = button.closest('.code-block').querySelector('.code-content');
-            const text = codeContent.textContent;
-            
-            navigator.clipboard.writeText(text).then(() => {
-                const copyText = button.querySelector('.copy-text');
-                copyText.textContent = 'Tersalin!';
-                button.classList.add('copied');
-                
-                setTimeout(() => {
-                    copyText.textContent = 'Salin';
-                    button.classList.remove('copied');
-                }, 2000);
-            });
-        }
-
-        // Send message
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            
-            if (!message) return;
-            
-            // Clear input
-            messageInput.value = '';
-            adjustTextareaHeight();
-            
-            // Add user message to chat
-            addMessageToChat(message, 'user');
-            
-            // Show typing indicator
-            typingIndicator.style.display = 'flex';
-            sendButton.disabled = true;
-            
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        message,
-                        sessionId: currentSessionId 
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.reply) {
-                    addMessageToChat(data.reply, 'assistant');
-                    if (data.sessionId) {
-                        currentSessionId = data.sessionId;
-                    }
-                } else {
-                    addMessageToChat('Maaf, terjadi kesalahan. Silakan coba lagi.', 'assistant');
-                }
-            } catch (error) {
-                console.error('Error sending message:', error);
-                addMessageToChat('Maaf, terjadi kesalahan koneksi. Silakan coba lagi.', 'assistant');
-            } finally {
-                typingIndicator.style.display = 'none';
-                sendButton.disabled = false;
-                messageInput.focus();
-            }
-        }
-
-        // Adjust textarea height
-        function adjustTextareaHeight() {
-            messageInput.style.height = 'auto';
-            messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
-        }
-
-        // Toggle theme
-        function toggleTheme() {
-            if (currentTheme === 'light') {
-                currentTheme = 'dark';
-                themeToggle.textContent = '☀️';
-            } else {
-                currentTheme = 'light';
-                themeToggle.textContent = '🌙';
-            }
-            
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', currentTheme);
-        }
-
-        // Toggle music
-        function toggleMusic() {
-            if (!musicPlayer.classList.contains('active')) {
-                musicPlayer.classList.add('active');
-                playMusic();
-            } else {
-                musicPlayer.classList.remove('active');
-                pauseMusic();
-            }
-        }
-
-        // Play music
-        function playMusic() {
-            if (currentAudio) {
-                currentAudio.play();
-                isMusicPlaying = true;
-                document.getElementById('playPauseMusic').textContent = '⏸️';
-            } else {
-                loadAndPlayMusic();
-            }
-        }
-
-        // Pause music
-        function pauseMusic() {
-            if (currentAudio) {
-                currentAudio.pause();
-                isMusicPlaying = false;
-                document.getElementById('playPauseMusic').textContent = '▶️';
-            }
-        }
-
-        // Load and play music
-        function loadAndPlayMusic() {
-            currentAudio = new Audio(musicTracks[currentTrackIndex]);
-            currentAudio.addEventListener('loadedmetadata', () => {
-                currentAudio.play();
-                isMusicPlaying = true;
-                document.getElementById('playPauseMusic').textContent = '⏸️';
-            });
-            
-            currentAudio.addEventListener('timeupdate', () => {
-                const progress = (currentAudio.currentTime / currentAudio.duration) * 100;
-                document.getElementById('musicProgress').style.width = progress + '%';
-            });
-            
-            currentAudio.addEventListener('ended', () => {
-                nextMusic();
-            });
-        }
-
-        // Next music track
-        function nextMusic() {
-            currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
-            if (currentAudio) {
-                currentAudio.pause();
-            }
-            loadAndPlayMusic();
-        }
-
-        // Previous music track
-        function prevMusic() {
-            currentTrackIndex = (currentTrackIndex - 1 + musicTracks.length) % musicTracks.length;
-            if (currentAudio) {
-                currentAudio.pause();
-            }
-            loadAndPlayMusic();
-        }
-
-        // Show contact panel
-        function showContactPanel() {
-            contactPanel.classList.add('active');
-            overlay.classList.add('active');
-        }
-
-        // Hide contact panel
-        function hideContactPanel() {
-            contactPanel.classList.remove('active');
-            overlay.classList.remove('active');
-        }
-
-        // Show history panel
-        function showHistoryPanel() {
-            historyPanel.classList.add('active');
-            overlay.classList.add('active');
-            loadSessions();
-        }
-
-        // Hide history panel
-        function hideHistoryPanel() {
-            historyPanel.classList.remove('active');
-            overlay.classList.remove('active');
-        }
-
-        // Load chat sessions
-        async function loadSessions() {
-            try {
-                const response = await fetch('/api/sessions');
-                const sessions = await response.json();
-                
-                historyContent.innerHTML = '';
-                
-                if (sessions.length === 0) {
-                    historyContent.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 2rem;">Belum ada riwayat chat</div>';
-                    return;
-                }
-                
-                sessions.forEach(session => {
-                    const sessionElement = document.createElement('div');
-                    sessionElement.className = 'session-item';
-                    if (session.id === currentSessionId) {
-                        sessionElement.classList.add('active');
-                    }
-                    
-                    const date = new Date(session.lastActivity).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                    
-                    sessionElement.innerHTML = `
-                        <div style="font-weight: 600; margin-bottom: 0.25rem;">${session.title}</div>
-                        <div class="session-date">${date}</div>
-                    `;
-                    
-                    sessionElement.addEventListener('click', () => {
-                        loadChatHistory(session.id);
-                        hideHistoryPanel();
-                    });
-                    
-                    historyContent.appendChild(sessionElement);
-                });
-            } catch (error) {
-                console.error('Error loading sessions:', error);
-            }
-        }
-
-        // Logout
-        async function logout() {
-            try {
-                await fetch('/api/logout', { method: 'POST' });
-                window.location.href = '/login.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = '/login.html';
-            }
-        }
-
-        // Event Listeners
-        sendButton.addEventListener('click', sendMessage);
+// Add copy buttons to code blocks
+function addCopyButtonsToCodeBlocks() {
+    document.querySelectorAll('.code-block').forEach(block => {
+        const copyButton = block.querySelector('.copy-button');
+        const codeContent = block.querySelector('.code-content').textContent;
         
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
+        copyButton.addEventListener('click', function() {
+            copyCodeToClipboard(codeContent, this);
+        });
+    });
+}
+
+// Copy code to clipboard
+async function copyCodeToClipboard(code, button) {
+    try {
+        await navigator.clipboard.writeText(code);
+        
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span>✅</span> Tersalin!';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy code:', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span>✅</span> Tersalin!';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    }
+}
+
+// Show typing indicator
+function showTypingIndicator() {
+    typingIndicator.style.display = 'block';
+    scrollToBottom();
+}
+
+// Hide typing indicator
+function hideTypingIndicator() {
+    typingIndicator.style.display = 'none';
+}
+
+// Scroll to bottom of chat
+function scrollToBottom() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Get current time
+function getCurrentTime() {
+    const now = new Date();
+    return now.toLocaleTimeString('id-ID', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+}
+
+// Simulate AI response
+async function simulateAIResponse(message) {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+    
+    // Simple response logic based on message content
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('halo') || lowerMessage.includes('hai') || lowerMessage.includes('hello')) {
+        return "Halo! Saya Elaina AI Assistant. Ada yang bisa saya bantu? 😊";
+    } else if (lowerMessage.includes('nama')) {
+        return "Saya adalah Elaina AI Assistant, asisten virtual yang siap membantu Anda!";
+    } else if (lowerMessage.includes('buat kode') || lowerMessage.includes('program')) {
+        return `Berikut contoh kode JavaScript sederhana:
+
+\`\`\`javascript
+function sapa(nama) {
+    return "Halo, " + nama + "! Selamat datang di Elaina AI.";
+}
+
+// Contoh penggunaan
+console.log(sapa("User"));
+\`\`\`
+
+Kode di atas adalah fungsi sederhana untuk menyapa pengguna.`;
+    } else if (lowerMessage.includes('terima kasih') || lowerMessage.includes('thanks')) {
+        return "Sama-sama! Senang bisa membantu Anda. 😊";
+    } else if (lowerMessage.includes('developer') || lowerMessage.includes('pembuat')) {
+        return "Saya dikembangkan oleh tim developer yang berdedikasi. Anda bisa menghubungi developer melalui menu kontak!";
+    } else {
+        return `Saya memahami bahwa Anda mengatakan: "${message}". Sebagai AI assistant, saya di sini untuk membantu dengan berbagai pertanyaan dan tugas. Ada hal spesifik yang ingin Anda ketahui atau butuhkan bantuan?`;
+    }
+}
+
+// Toggle theme
+function toggleTheme() {
+    if (currentTheme === 'light') {
+        currentTheme = 'dark';
+        document.body.classList.add('dark-mode');
+        themeToggle.innerHTML = '☀️';
+    } else {
+        currentTheme = 'light';
+        document.body.classList.remove('dark-mode');
+        themeToggle.innerHTML = '🌙';
+    }
+    localStorage.setItem('theme', currentTheme);
+}
+
+// Toggle music player
+function toggleMusicPlayer() {
+    musicPlayer.classList.toggle('active');
+    if (musicPlayer.classList.contains('active') && !isMusicPlaying) {
+        loadCurrentMusic();
+    }
+}
+
+// Toggle music play/pause
+function toggleMusic() {
+    if (isMusicPlaying) {
+        audio.pause();
+        playPauseMusic.innerHTML = '▶️';
+    } else {
+        audio.play().catch(e => console.log('Audio play failed:', e));
+        playPauseMusic.innerHTML = '⏸️';
+    }
+    isMusicPlaying = !isMusicPlaying;
+}
+
+// Play previous music
+function playPreviousMusic() {
+    currentMusicIndex = (currentMusicIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
+    loadCurrentMusic();
+    if (isMusicPlaying) {
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    }
+}
+
+// Play next music
+function playNextMusic() {
+    currentMusicIndex = (currentMusicIndex + 1) % musicPlaylist.length;
+    loadCurrentMusic();
+    if (isMusicPlaying) {
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    }
+}
+
+// Load current music
+function loadCurrentMusic() {
+    const music = musicPlaylist[currentMusicIndex];
+    audio.src = music.url;
+    musicTitle.textContent = music.title;
+    audio.load();
+}
+
+// Update music progress
+function updateMusicProgress() {
+    if (audio.duration) {
+        const progress = (audio.currentTime / audio.duration) * 100;
+        musicProgressBar.style.width = progress + '%';
+    }
+}
+
+// Toggle panel visibility
+function togglePanel(panel) {
+    const isActive = panel.classList.contains('active');
+    closeAllPanels();
+    
+    if (!isActive) {
+        panel.classList.add('active');
+        overlay.classList.add('active');
+        
+        if (panel === historyPanel) {
+            loadHistoryContent();
+        }
+    }
+}
+
+// Close all panels
+function closeAllPanels() {
+    historyPanel.classList.remove('active');
+    contactPanel.classList.remove('active');
+    overlay.classList.remove('active');
+}
+
+// Load chat history
+function loadChatHistory() {
+    const savedHistory = localStorage.getItem('chatHistory');
+    if (savedHistory) {
+        chatHistory = JSON.parse(savedHistory);
+    }
+    
+    const savedSession = localStorage.getItem('currentSession');
+    if (savedSession) {
+        currentSession = JSON.parse(savedSession);
+        // Restore current session to chat
+        currentSession.forEach(([userMsg, aiMsg]) => {
+            if (userMsg) addMessageToChat(userMsg, 'user');
+            if (aiMsg) addMessageToChat(aiMsg, 'ai');
+        });
+    }
+}
+
+// Save to current session
+function saveToCurrentSession(userMessage, aiMessage) {
+    currentSession.push([userMessage, aiMessage]);
+    localStorage.setItem('currentSession', JSON.stringify(currentSession));
+}
+
+// Load history content
+function loadHistoryContent() {
+    historyContent.innerHTML = '';
+    
+    if (chatHistory.length === 0) {
+        historyContent.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 2rem;">Belum ada riwayat chat</div>';
+        return;
+    }
+    
+    chatHistory.forEach((session, index) => {
+        const sessionItem = document.createElement('div');
+        sessionItem.className = 'session-item';
+        
+        const sessionDate = new Date(session.date).toLocaleDateString('id-ID', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
         
-        messageInput.addEventListener('input', adjustTextareaHeight);
+        sessionItem.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 0.25rem;">Sesi ${index + 1}</div>
+            <div class="session-date">${sessionDate}</div>
+            <div style="font-size: 0.875rem; color: var(--text-light); margin-top: 0.5rem;">
+                ${session.messages.length} pesan
+            </div>
+        `;
         
-        themeToggle.addEventListener('click', toggleTheme);
-        musicToggle.addEventListener('click', toggleMusic);
-        contactToggle.addEventListener('click', showContactPanel);
-        historyToggle.addEventListener('click', showHistoryPanel);
-        logoutButton.addEventListener('click', logout);
-        
-        closeHistory.addEventListener('click', hideHistoryPanel);
-        closeContact.addEventListener('click', hideContactPanel);
-        overlay.addEventListener('click', () => {
-            hideHistoryPanel();
-            hideContactPanel();
+        sessionItem.addEventListener('click', () => {
+            loadSession(session);
+            closeAllPanels();
         });
         
-        // Music controls
-        document.getElementById('playPauseMusic').addEventListener('click', () => {
-            if (isMusicPlaying) {
-                pauseMusic();
-            } else {
-                playMusic();
-            }
-        });
-        
-        document.getElementById('nextMusic').addEventListener('click', nextMusic);
-        document.getElementById('prevMusic').addEventListener('click', prevMusic);
+        historyContent.appendChild(sessionItem);
+    });
+}
 
-        // Initialize app
-        function initApp() {
-            initTheme();
-            checkAuth();
-            messageInput.focus();
+// Load session
+function loadSession(session) {
+    // Clear current chat
+    chatMessages.innerHTML = '';
+    currentSession = [];
+    
+    // Add welcome message
+    const welcomeMessage = document.createElement('div');
+    welcomeMessage.className = 'welcome-message';
+    welcomeMessage.innerHTML = `
+        <div class="welcome-title">Mengembalikan Riwayat Chat</div>
+        <p>Menampilkan percakapan dari ${new Date(session.date).toLocaleDateString('id-ID')}</p>
+    `;
+    chatMessages.appendChild(welcomeMessage);
+    
+    // Load session messages
+    session.messages.forEach(([userMsg, aiMsg]) => {
+        if (userMsg) addMessageToChat(userMsg, 'user');
+        if (aiMsg) addMessageToChat(aiMsg, 'ai');
+        currentSession.push([userMsg, aiMsg]);
+    });
+    
+    localStorage.setItem('currentSession', JSON.stringify(currentSession));
+}
+
+// Logout function
+function logout() {
+    // Save current session to history if not empty
+    if (currentSession.length > 0) {
+        const session = {
+            date: new Date().toISOString(),
+            messages: currentSession
+        };
+        chatHistory.unshift(session);
+        
+        // Keep only last 10 sessions
+        if (chatHistory.length > 10) {
+            chatHistory = chatHistory.slice(0, 10);
         }
+        
+        localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+    }
+    
+    // Clear auth data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentSession');
+    
+    // Redirect to login
+    window.location.href = '/login.html';
+}
 
-        // Start the app
-        initApp();
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', initApp);
+
+// Export functions for global access
+window.copyCode = function(button) {
+    const codeBlock = button.closest('.code-block');
+    const codeContent = codeBlock.querySelector('.code-content').textContent;
+    copyCodeToClipboard(codeContent, button);
+};
     </script>
 </body>
 </html>
