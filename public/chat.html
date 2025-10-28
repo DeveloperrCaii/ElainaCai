@@ -111,7 +111,7 @@
 
         header {
             background-color: var(--card-bg);
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 1rem;
             box-shadow: var(--shadow);
             display: flex;
             justify-content: space-between;
@@ -120,33 +120,33 @@
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
-            min-height: 60px;
+            min-height: 50px;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
             flex: 1;
         }
 
         .logo-icon {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 0.8rem;
             flex-shrink: 0;
         }
 
         .logo-text {
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 0.9rem;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -158,7 +158,7 @@
 
         .header-controls {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             align-items: center;
             flex-shrink: 0;
         }
@@ -166,29 +166,29 @@
         .user-info {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.375rem 0.5rem;
+            gap: 0.4rem;
+            padding: 0.3rem 0.4rem;
             background-color: var(--bg-color);
-            border-radius: 0.5rem;
+            border-radius: 0.4rem;
             border: 1px solid var(--border-color);
             flex-shrink: 0;
         }
 
         .username {
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 80px;
+            max-width: 60px;
         }
 
         .user-badge {
             background-color: var(--primary-color);
             color: white;
-            padding: 0.2rem 0.4rem;
-            border-radius: 0.375rem;
-            font-size: 0.7rem;
+            padding: 0.15rem 0.3rem;
+            border-radius: 0.3rem;
+            font-size: 0.6rem;
             font-weight: 600;
             flex-shrink: 0;
         }
@@ -202,10 +202,10 @@
             border: 1px solid var(--border-color);
             color: var(--text-color);
             cursor: pointer;
-            font-size: 1rem;
-            width: 36px;
-            height: 36px;
-            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 0.4rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -230,7 +230,7 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            height: calc(100vh - 120px);
+            height: calc(100vh - 110px);
             overflow: hidden;
             z-index: 1;
         }
@@ -364,14 +364,14 @@
         .input-container {
             display: flex;
             gap: 0.5rem;
-            padding: 0.75rem;
+            padding: 0.5rem 0.75rem;
             background-color: var(--card-bg);
             box-shadow: var(--shadow);
             margin-top: auto;
             backdrop-filter: blur(10px);
             border-top: 1px solid var(--border-color);
             flex-shrink: 0;
-            min-height: 70px;
+            min-height: 60px;
             align-items: flex-end;
         }
 
@@ -399,7 +399,6 @@
             box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.1);
         }
 
-        /* PERBAIKAN: Tombol kirim yang lebih besar untuk mobile */
         .send-button {
             background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
             color: white;
@@ -463,14 +462,14 @@
 
         .footer {
             text-align: center;
-            padding: 0.75rem;
+            padding: 0.5rem;
             color: var(--text-light);
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             z-index: 1;
             background-color: var(--card-bg);
             border-top: 1px solid var(--border-color);
             flex-shrink: 0;
-            min-height: 50px;
+            min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -543,7 +542,7 @@
         /* Music player styles */
         .music-player {
             position: fixed;
-            bottom: 80px;
+            bottom: 70px;
             right: 10px;
             background-color: var(--music-bg);
             border-radius: 1rem;
@@ -742,7 +741,7 @@
         /* Contact panel styles */
         .contact-panel {
             position: fixed;
-            bottom: 80px;
+            bottom: 70px;
             left: 10px;
             background-color: var(--music-bg);
             border-radius: 1rem;
@@ -850,59 +849,9 @@
             text-overflow: ellipsis;
         }
 
-        /* Clear chat button */
-        .clear-chat-button {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            background: var(--error-color);
-            color: white;
-            border: none;
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-            z-index: 10;
-        }
-
-        .clear-chat-button:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
-        }
-
-        /* No messages state */
-        .no-messages {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: var(--text-light);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .no-messages-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .no-messages-text {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .no-messages-subtext {
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
-
-        /* PERBAIKAN: Media queries untuk mobile yang lebih baik */
         @media (max-width: 768px) {
             .chat-container {
-                height: calc(100vh - 110px);
+                height: calc(100vh - 100px);
             }
             
             .message {
@@ -910,11 +859,11 @@
             }
             
             .header-controls {
-                gap: 0.25rem;
+                gap: 0.3rem;
             }
             
             .user-info {
-                padding: 0.25rem 0.375rem;
+                padding: 0.2rem 0.3rem;
             }
             
             .username {
@@ -923,20 +872,19 @@
             
             .input-container {
                 padding: 0.5rem;
-                min-height: 70px;
+                min-height: 65px;
                 gap: 0.75rem;
             }
             
             .message-input {
-                min-height: 50px;
+                min-height: 45px;
                 padding: 0.75rem;
                 font-size: 1rem;
             }
             
-            /* PERBAIKAN: Tombol kirim lebih besar di mobile */
             .send-button {
-                min-width: 60px;
-                min-height: 50px;
+                min-width: 55px;
+                min-height: 45px;
                 padding: 0.75rem;
                 font-size: 1.3rem;
                 border-radius: 0.75rem;
@@ -946,13 +894,13 @@
                 width: calc(100% - 20px);
                 right: 10px;
                 left: 10px;
-                bottom: 70px;
+                bottom: 60px;
             }
             
             .contact-panel {
                 width: calc(100% - 20px);
                 left: 10px;
-                bottom: 70px;
+                bottom: 60px;
             }
             
             .welcome-message {
@@ -966,31 +914,31 @@
             
             .footer {
                 padding: 0.5rem;
-                min-height: 40px;
-                font-size: 0.75rem;
+                min-height: 35px;
+                font-size: 0.65rem;
             }
         }
 
         @media (max-width: 480px) {
             header {
-                padding: 0.5rem 0.75rem;
-                min-height: 50px;
+                padding: 0.4rem 0.75rem;
+                min-height: 45px;
             }
             
             .logo-text {
-                font-size: 1rem;
+                font-size: 0.8rem;
             }
             
             .logo-icon {
-                width: 28px;
-                height: 28px;
-                font-size: 0.9rem;
+                width: 24px;
+                height: 24px;
+                font-size: 0.7rem;
             }
             
             .header-button {
-                width: 32px;
-                height: 32px;
-                font-size: 0.9rem;
+                width: 28px;
+                height: 28px;
+                font-size: 0.8rem;
             }
             
             .chat-messages {
@@ -1007,56 +955,54 @@
             }
             
             .chat-container {
-                height: calc(100vh - 100px);
+                height: calc(100vh - 90px);
             }
             
-            /* PERBAIKAN: Input area lebih besar di layar kecil */
             .input-container {
-                padding: 0.75rem;
-                min-height: 80px;
+                padding: 0.4rem;
+                min-height: 60px;
             }
             
             .message-input {
-                min-height: 55px;
-                padding: 0.875rem;
+                min-height: 40px;
+                padding: 0.6rem;
             }
             
             .send-button {
-                min-width: 65px;
-                min-height: 55px;
-                font-size: 1.4rem;
+                min-width: 50px;
+                min-height: 40px;
+                font-size: 1.2rem;
             }
         }
 
         /* Landscape orientation support */
         @media (max-height: 500px) and (orientation: landscape) {
             .chat-container {
-                height: calc(100vh - 80px);
+                height: calc(100vh - 70px);
             }
             
             header {
-                min-height: 50px;
-                padding: 0.5rem;
+                min-height: 40px;
+                padding: 0.3rem;
             }
             
             .footer {
-                min-height: 30px;
-                padding: 0.25rem;
+                min-height: 25px;
+                padding: 0.2rem;
             }
             
             .input-container {
-                min-height: 60px;
-                padding: 0.5rem;
+                min-height: 50px;
+                padding: 0.3rem;
             }
             
-            /* PERBAIKAN: Tombol tetap besar di landscape */
             .send-button {
-                min-width: 55px;
-                min-height: 50px;
+                min-width: 45px;
+                min-height: 40px;
             }
         }
 
-        /* PERBAIKAN: Touch target yang lebih besar untuk aksesibilitas */
+        /* Touch target yang lebih besar untuk aksesibilitas */
         @media (max-width: 768px) {
             .header-button,
             .control-button,
@@ -1095,7 +1041,7 @@
             <button class="header-button music-toggle" id="musicToggle" title="Pemutar Musik">🎵</button>
             <button class="header-button theme-toggle" id="themeToggle" title="Toggle Theme">🌙</button>
             <button class="header-button logout-button" id="logoutButton" title="Logout">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M16 17L21 12L16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1123,7 +1069,7 @@
         <div class="input-container">
             <textarea class="message-input" id="messageInput" placeholder="Ketik pesan Anda di sini..." rows="1"></textarea>
             <button class="send-button" id="sendButton" title="Kirim Pesan">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -1226,7 +1172,6 @@
         // Audio setup
         const audio = new Audio();
         let isPlaying = false;
-        let isDragging = false;
 
         // Check authentication and load user info
         checkAuthStatus();
@@ -1501,11 +1446,9 @@
             });
 
             audio.addEventListener('timeupdate', () => {
-                if (!isDragging) {
-                    const progress = (audio.currentTime / audio.duration) * 100;
-                    progressBar.style.width = `${progress}%`;
-                    currentTime.textContent = formatTime(audio.currentTime);
-                }
+                const progress = (audio.currentTime / audio.duration) * 100;
+                progressBar.style.width = `${progress}%`;
+                currentTime.textContent = formatTime(audio.currentTime);
             });
 
             audio.addEventListener('ended', () => {
