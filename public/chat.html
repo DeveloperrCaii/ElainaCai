@@ -971,6 +971,9 @@
     </div>
 
     <script>
+        // Session management
+        let currentSessionId = localStorage.getItem('sessionId');
+        
         // Check authentication and load user info
         checkAuthStatus();
 
@@ -1056,12 +1059,20 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                        }
+                            'Authorization': `Bearer ${currentSessionId}`
+                        },
+                        body: JSON.stringify({ sessionId: currentSessionId })
                     });
 
                     const data = await response.json();
 
                     if (data.success) {
+                        // Clear localStorage
+                        localStorage.removeItem('sessionId');
+                        localStorage.removeItem('username');
+                        localStorage.removeItem('isDeveloper');
+                        currentSessionId = null;
+                        
                         window.location.href = '/';
                     } else {
                         alert('Gagal logout: ' + data.error);
@@ -1075,19 +1086,30 @@
 
         async function checkAuthStatus() {
             try {
-                const response = await fetch('/api/auth/status');
+                const response = await fetch('/api/auth/status', {
+                    headers: {
+                        'Authorization': `Bearer ${currentSessionId}`
+                    }
+                });
                 const data = await response.json();
                 
                 if (!data.isAuthenticated) {
+                    // Clear invalid session
+                    localStorage.removeItem('sessionId');
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('isDeveloper');
                     window.location.href = '/';
                     return;
                 }
 
-                // Display user info
-                usernameDisplay.textContent = data.username;
-                userBadge.textContent = data.isDeveloper ? 'Developer' : 'User';
+                // Display user info from localStorage or API
+                const savedUsername = localStorage.getItem('username') || data.username;
+                const savedIsDeveloper = localStorage.getItem('isDeveloper') === 'true' || data.isDeveloper;
                 
-                if (data.isDeveloper) {
+                usernameDisplay.textContent = savedUsername;
+                userBadge.textContent = savedIsDeveloper ? 'Developer' : 'User';
+                
+                if (savedIsDeveloper) {
                     userBadge.classList.add('developer');
                 }
 
@@ -1101,7 +1123,11 @@
 
         async function loadChatHistory() {
             try {
-                const response = await fetch('/api/chat/history');
+                const response = await fetch('/api/chat/history', {
+                    headers: {
+                        'Authorization': `Bearer ${currentSessionId}`
+                    }
+                });
                 const data = await response.json();
                 
                 const welcomeMessage = chatMessages.querySelector('.welcome-message');
@@ -1161,8 +1187,12 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentSessionId}`
                     },
-                    body: JSON.stringify({ message })
+                    body: JSON.stringify({ 
+                        message,
+                        sessionId: currentSessionId 
+                    })
                 });
 
                 const data = await response.json();
