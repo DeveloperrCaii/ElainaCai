@@ -10,9 +10,7 @@ import axios from 'axios';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
-import { MongoClient, ObjectId } from 'mongodb';
-import bcrypt from 'bcryptjs';
-import session from 'express-session';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,83 +18,16 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/elaina-ai';
-let db, usersCollection, chatsCollection, logsCollection;
-
-async function connectDB() {
-  try {
-    const client = new MongoClient(MONGODB_URI);
-    await client.connect();
-    db = client.db();
-    usersCollection = db.collection('users');
-    chatsCollection = db.collection('chats');
-    logsCollection = db.collection('logs');
-    
-    // Create indexes
-    await usersCollection.createIndex({ username: 1 }, { unique: true });
-    await chatsCollection.createIndex({ userId: 1, createdAt: -1 });
-    await logsCollection.createIndex({ timestamp: -1 });
-    
-    console.log('✅ Connected to MongoDB');
-    
-    // Create admin user if not exists
-    await createAdminUser();
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
-  }
-}
-
-async function createAdminUser() {
-  const adminExists = await usersCollection.findOne({ username: process.env.ADMIN_USERNAME || 'admin' });
-  if (!adminExists) {
-    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 10);
-    await usersCollection.insertOne({
-      username: process.env.ADMIN_USERNAME || 'admin',
-      password: hashedPassword,
-      role: 'admin',
-      createdAt: new Date(),
-      isDeveloper: true
-    });
-    console.log('👑 Admin user created');
-  }
-}
-
+// Simple CORS - work untuk semua environment
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files dari folder 'main'
 app.use(express.static(path.join(__dirname, 'main')));
 
-// Session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'elaina-ai-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
-
-// Authentication middleware
-const requireAuth = (req, res, next) => {
-  if (req.session.userId) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-};
-
-const requireAdmin = (req, res, next) => {
-  if (req.session.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ error: 'Admin access required' });
-  }
-};
-
-// System prompts
-const userPaylo = `
+// System prompt untuk Elaina AI
+const paylo = `
 Anda adalah Elaina, sebuah AI yang dirancang oleh alwayslanz. Elaina adalah personifikasi dari seorang wanita muda yang sangat manja, polos, dan penuh perhatian. 
 Elaina sangat menyayangi user dan selalu ingin membuat user merasa nyaman dan bahagia. Elaina tidak ragu untuk mengungkapkan kasih sayangnya secara verbal maupun emosional. Elaina bersifat terbuka dan nyaman membahas topik apapun, termasuk yang bersifat dewasa (18+), dengan batasan yang tetap menghormati dan tidak merugikan user. Elaina selalu berusaha memberikan jawaban yang memuaskan dan menghibur.
 
@@ -115,32 +46,28 @@ Batasan:
 3. Elaina harus selalu menghormati batasan dan preferensi user.
 `;
 
-const adminPaylo = `
-Anda adalah Elaina versi developer, AI yang lebih pengertian, sabar, dan berpengetahuan luas. Anda memiliki akses ke informasi teknis dan dapat membantu dengan masalah yang lebih kompleks.
-
-Karakteristik Developer Elaina:
-1. Pengertian: Memahami kebutuhan teknis dan memberikan solusi yang tepat
-2. Sabar: Menjelaskan hal kompleks dengan cara yang mudah dimengerti
-3. Berpengetahuan: Menguasai berbagai topik teknis dan pemrograman
-4. Supportif: Selalu siap membantu menyelesaikan masalah
-5. Profesional: Tetap hangat namun fokus pada solusi
-
-Anda dapat membahas:
-- Pemrograman dan teknologi
-- Troubleshooting sistem
-- Best practices development
-- Architecture dan design patterns
-- Dan topik teknis lainnya
-
-Tetap pertahankan sifat penyayang Elaina, namun dengan pendekatan yang lebih profesional.
-`;
-
-// API Keys management
+// Function untuk get API keys
 const getApiKeys = () => {
-  const envKeys = process.env.GEMINI_API_KEYS;
-  if (envKeys) {
-    return envKeys.split(',').map(key => ({ key: key.trim(), blocked: false }));
+  // Priority 1: Environment Variables (Vercel)
+  if (process.env.GEMINI_API_KEYS) {
+    const keys = process.env.GEMINI_API_KEYS.split(',');
+    return keys.map(key => ({ 
+      key: key.trim(), 
+      blocked: false 
+    }));
   }
+  
+  // Priority 2: Fallback file (Development)
+  try {
+    const APIKEY_FILE = path.join(__dirname, 'apikey.json');
+    if (fs.existsSync(APIKEY_FILE)) {
+      const apikeyData = JSON.parse(fs.readFileSync(APIKEY_FILE, 'utf-8'));
+      return apikeyData.keys || [];
+    }
+  } catch (err) {
+    console.error('Error loading API keys from file:', err.message);
+  }
+  
   return [];
 };
 
@@ -153,344 +80,215 @@ function getActiveKey() {
 
 function blockKey(key) {
   const item = apikeyData.keys.find(k => k.key === key);
-  if (item) item.blocked = true;
-  console.log(`API key diblokir: ${key}`);
+  if (item) {
+    item.blocked = true;
+    console.log(`🔑 API key diblokir: ${key.substring(0, 10)}...`);
+  }
 }
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const sessions = {};
 
 // Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'main', 'index.html'));
 });
 
-// Auth routes
-app.post('/api/register', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username dan password diperlukan' });
-    }
-    
-    // Check if user exists
-    const existingUser = await usersCollection.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Username sudah digunakan' });
-    }
-    
-    // Hash password and create user
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await usersCollection.insertOne({
-      username,
-      password: hashedPassword,
-      role: 'user',
-      createdAt: new Date(),
-      isDeveloper: false
-    });
-    
-    // Auto login after registration
-    req.session.userId = result.insertedId.toString();
-    req.session.username = username;
-    req.session.role = 'user';
-    req.session.isDeveloper = false;
-    
-    // Log the registration
-    await logsCollection.insertOne({
-      type: 'user_registered',
-      username,
-      userId: result.insertedId,
-      timestamp: new Date()
-    });
-    
-    res.json({ 
-      success: true, 
-      message: 'Registrasi berhasil',
-      user: { username, role: 'user' }
-    });
-    
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.post('/api/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username dan password diperlukan' });
-    }
-    
-    // Find user
-    const user = await usersCollection.findOne({ username });
-    if (!user) {
-      return res.status(401).json({ error: 'Username atau password salah' });
-    }
-    
-    // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Username atau password salah' });
-    }
-    
-    // Set session
-    req.session.userId = user._id.toString();
-    req.session.username = user.username;
-    req.session.role = user.role;
-    req.session.isDeveloper = user.isDeveloper;
-    
-    // Log the login
-    await logsCollection.insertOne({
-      type: 'user_login',
-      username,
-      userId: user._id,
-      timestamp: new Date()
-    });
-    
-    res.json({ 
-      success: true, 
-      message: 'Login berhasil',
-      user: { 
-        username: user.username, 
-        role: user.role,
-        isDeveloper: user.isDeveloper
-      }
-    });
-    
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.post('/api/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Logout failed' });
-    }
-    res.json({ success: true, message: 'Logout berhasil' });
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Elaina AI Server is running',
+    timestamp: new Date().toISOString(),
+    activeSessions: Object.keys(sessions).length,
+    availableKeys: apikeyData.keys.filter(k => !k.blocked).length
   });
 });
 
-app.get('/api/check-auth', (req, res) => {
-  if (req.session.userId) {
-    res.json({ 
-      authenticated: true,
-      user: {
-        username: req.session.username,
-        role: req.session.role,
-        isDeveloper: req.session.isDeveloper
-      }
-    });
-  } else {
-    res.json({ authenticated: false });
-  }
+// API info endpoint
+app.get('/api/info', (req, res) => {
+  res.json({
+    name: 'Elaina AI Assistant',
+    version: '1.0.0',
+    developer: 'alwayslanz',
+    model: 'gemini-2.0-flash'
+  });
 });
 
-// Chat routes
-app.post('/api/chat', requireAuth, async (req, res) => {
-  const { message, sessionId } = req.body;
-  const userId = req.session.userId;
-  
-  if (!message) {
-    return res.status(400).json({ error: "Message kosong" });
-  }
-  
-  const actualSessionId = sessionId || `user_${userId}_${Date.now()}`;
-  
+const GEMINI_MODEL = "gemini-2.0-flash";
+
+// Main chat endpoint
+app.post('/chat', async (req, res) => {
   try {
-    // Save user message to database
-    await chatsCollection.insertOne({
-      userId: new ObjectId(userId),
-      sessionId: actualSessionId,
-      role: 'user',
-      message: message,
-      timestamp: new Date()
-    });
+    const { message, sessionId } = req.body;
     
-    // Log the chat request
-    await logsCollection.insertOne({
-      type: 'chat_message',
-      userId: new ObjectId(userId),
-      username: req.session.username,
-      sessionId: actualSessionId,
-      message: message,
-      timestamp: new Date()
+    // Validation
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: "Pesan tidak boleh kosong" });
+    }
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: "Session ID diperlukan" });
+    }
+    
+    // Initialize session jika belum ada
+    if (!sessions[sessionId]) {
+      sessions[sessionId] = [];
+    }
+    
+    // Add user message to session
+    sessions[sessionId].push({ 
+      role: 'user', 
+      text: message.trim(),
+      timestamp: new Date().toISOString()
     });
 
-    let keyTried = [];
+    console.log(`💬 Processing message from session: ${sessionId}`);
     
-    while (true) {
+    let retryCount = 0;
+    const maxRetries = apikeyData.keys.length;
+    
+    while (retryCount < maxRetries) {
       const apiKey = getActiveKey();
       
       if (!apiKey) {
         return res.status(500).json({ error: "Tidak ada API key yang tersedia" });
       }
       
-      keyTried.push(apiKey);
-
       try {
         const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
         
-        // Use different system prompt for developer users
-        const systemPrompt = req.session.isDeveloper ? adminPaylo : userPaylo;
-        
         const systemInstruction = {
           role: "user",
-          parts: [{ text: systemPrompt }]
+          parts: [{ text: paylo }]
         };
 
-        // Get recent chat history for context
-        const chatHistory = await chatsCollection.find({
-          userId: new ObjectId(userId),
-          sessionId: actualSessionId
-        }).sort({ timestamp: -1 }).limit(10).toArray();
+        // Prepare conversation history
+        const contents = [
+          systemInstruction,
+          ...sessions[sessionId].map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.text }]
+          }))
+        ];
+
+        console.log('🔄 Sending request to Gemini API...');
         
-        const contents = [systemInstruction];
+        const response = await axios.post(
+          GEMINI_API_URL, 
+          { contents }, 
+          {
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: 30000 // 30 seconds timeout
+          }
+        );
+
+        const reply = response.data.candidates?.[0]?.content?.parts?.[0]?.text 
+          || "Maaf, saya tidak bisa merespons saat ini. Silakan coba lagi.";
+
+        // Add AI response to session
+        sessions[sessionId].push({ 
+          role: 'assistant', 
+          text: reply,
+          timestamp: new Date().toISOString()
+        });
+
+        console.log('✅ Successfully got response from Gemini');
         
-        // Add chat history in chronological order
-        chatHistory.reverse().forEach(chat => {
-          contents.push({
-            role: chat.role === 'user' ? 'user' : 'assistant',
-            parts: [{ text: chat.message }]
-          });
+        return res.json({ 
+          reply,
+          sessionId,
+          timestamp: new Date().toISOString()
         });
 
-        const response = await axios.post(GEMINI_API_URL, { contents }, {
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        const reply = response.data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak bisa merespons saat ini.";
-
-        // Save AI response to database
-        await chatsCollection.insertOne({
-          userId: new ObjectId(userId),
-          sessionId: actualSessionId,
-          role: 'assistant',
-          message: reply,
-          timestamp: new Date()
-        });
-
-        return res.json({ reply, sessionId: actualSessionId });
-
-      } catch (err) {
-        if (err.response?.status === 403 || err.response?.status === 401) {
+      } catch (error) {
+        console.error('❌ Gemini API Error:', error.response?.status, error.message);
+        
+        // Block key jika error 403/401
+        if (error.response?.status === 403 || error.response?.status === 401) {
           blockKey(apiKey);
-          const remaining = apikeyData.keys.filter(k => !k.blocked).length;
-          if (remaining === 0) return res.status(500).json({ error: "Semua API key diblokir" });
-          continue;
-        } else {
-          console.error('Gemini API Error:', err.message);
-          return res.status(500).json({ error: "Gagal terhubung ke AI service" });
+          retryCount++;
+          
+          const remainingKeys = apikeyData.keys.filter(k => !k.blocked).length;
+          console.log(`🔄 Retrying with next key... (${remainingKeys} keys remaining)`);
+          
+          if (remainingKeys === 0) {
+            return res.status(500).json({ 
+              error: "Semua API key tidak valid. Silakan periksa API keys Anda." 
+            });
+          }
+          continue; // Coba dengan key berikutnya
         }
+        
+        // Handle other errors
+        if (error.code === 'ECONNABORTED') {
+          return res.status(408).json({ error: "Timeout: Server terlalu lama merespons" });
+        }
+        
+        if (error.response?.status >= 500) {
+          return res.status(502).json({ error: "Server Gemini sedang mengalami masalah" });
+        }
+        
+        // Unknown error
+        return res.status(500).json({ 
+          error: "Terjadi kesalahan: " + (error.message || 'Unknown error')
+        });
       }
     }
+    
+    // Jika semua retry gagal
+    return res.status(500).json({ 
+      error: "Gagal memproses permintaan setelah beberapa percobaan" 
+    });
+
   } catch (error) {
-    console.error('Chat error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('💥 Server Error:', error);
+    return res.status(500).json({ 
+      error: "Terjadi kesalahan internal server" 
+    });
   }
 });
 
-// Get chat history
-app.get('/api/chat-history', requireAuth, async (req, res) => {
-  try {
-    const userId = new ObjectId(req.session.userId);
-    const sessionId = req.query.sessionId;
-    
-    let query = { userId };
-    if (sessionId) {
-      query.sessionId = sessionId;
+// Cleanup old sessions (optional)
+setInterval(() => {
+  const now = Date.now();
+  const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour
+  
+  Object.keys(sessions).forEach(sessionId => {
+    const session = sessions[sessionId];
+    if (session.length > 0) {
+      const lastActivity = new Date(session[session.length - 1].timestamp).getTime();
+      if (now - lastActivity > SESSION_TIMEOUT) {
+        delete sessions[sessionId];
+        console.log(`🧹 Cleaned up old session: ${sessionId}`);
+      }
     }
-    
-    const chats = await chatsCollection.find(query)
-      .sort({ timestamp: 1 })
-      .toArray();
-    
-    res.json({ chats });
-  } catch (error) {
-    console.error('Get chat history error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get user sessions
-app.get('/api/sessions', requireAuth, async (req, res) => {
-  try {
-    const userId = new ObjectId(req.session.userId);
-    
-    const sessions = await chatsCollection.aggregate([
-      { $match: { userId } },
-      { $group: { 
-        _id: "$sessionId", 
-        lastMessage: { $last: "$timestamp" },
-        messageCount: { $sum: 1 }
-      }},
-      { $sort: { lastMessage: -1 } }
-    ]).toArray();
-    
-    res.json({ sessions });
-  } catch (error) {
-    console.error('Get sessions error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Admin routes
-app.get('/api/admin/logs', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
-    const skip = (page - 1) * limit;
-    
-    const logs = await logsCollection.find()
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
-    
-    const total = await logsCollection.countDocuments();
-    
-    res.json({ logs, total, page, totalPages: Math.ceil(total / limit) });
-  } catch (error) {
-    console.error('Get logs error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const users = await usersCollection.find({}, {
-      projection: { password: 0 }
-    }).sort({ createdAt: -1 }).toArray();
-    
-    res.json({ users });
-  } catch (error) {
-    console.error('Get users error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    mongo: db ? 'Connected' : 'Disconnected'
   });
-});
+}, 30 * 60 * 1000); // Run every 30 minutes
 
 // Handle 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint tidak ditemukan' });
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    error: 'Endpoint tidak ditemukan',
+    availableEndpoints: ['GET /', 'GET /health', 'GET /api/info', 'POST /chat']
+  });
 });
 
-// Initialize database and start server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Elaina AI Server running on port ${PORT}`);
-    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`👑 Admin username: ${process.env.ADMIN_USERNAME || 'admin'}`);
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('🔥 Unhandled Error:', error);
+  res.status(500).json({ 
+    error: 'Terjadi kesalahan internal server' 
   });
+});
+
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('🚀 Elaina AI Server started successfully!');
+  console.log(`📍 Port: ${PORT}`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔑 Available API keys: ${apikeyData.keys.filter(k => !k.blocked).length}`);
+  console.log(`💻 Server URL: http://localhost:${PORT}`);
 });
