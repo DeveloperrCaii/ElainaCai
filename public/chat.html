@@ -243,6 +243,8 @@
             flex-direction: column;
             gap: 1rem;
             min-height: 0;
+            /* PERBAIKAN: Tambahkan padding bottom agar konten tidak tertutup footer */
+            padding-bottom: 1.5rem;
         }
 
         /* Custom scrollbar for chat messages */
@@ -373,6 +375,9 @@
             flex-shrink: 0;
             min-height: 70px;
             align-items: flex-end;
+            /* PERBAIKAN: Tambahkan z-index agar input tetap terlihat */
+            z-index: 10;
+            position: relative;
         }
 
         .message-input {
@@ -474,6 +479,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            /* PERBAIKAN: Tambahkan z-index agar footer tetap terlihat */
+            z-index: 5;
+            position: relative;
         }
 
         /* Code block styles */
@@ -1132,20 +1140,19 @@
     </div>
 
     <div class="footer">
-        <span>© 2024 Elaina Assistant - AI Chat Interface</span>
+        <div>© 2023 Elaina Assistant - Dibuat dengan ❤️ oleh Developer</div>
     </div>
 
-    <!-- Music Player -->
     <div class="music-player" id="musicPlayer">
         <div class="music-header">
             <div class="music-title">Pemutar Musik</div>
             <button class="close-button" id="closeMusicPlayer">✕</button>
         </div>
         <div class="track-info">
-            <img src="https://files.catbox.moe/4zrnsf.jpeg" alt="Track Cover" class="track-cover">
+            <img class="track-cover" id="trackCover" src="https://files.catbox.moe/4zrnsf.jpeg" alt="Track Cover">
             <div class="track-details">
-                <div class="track-name">Lofi Chill Study Beats</div>
-                <div class="track-artist">Elaina AI Radio</div>
+                <div class="track-name" id="trackName">Lagu Tidak Dipilih</div>
+                <div class="track-artist" id="trackArtist">Pilih lagu untuk diputar</div>
             </div>
         </div>
         <div class="progress-container" id="progressContainer">
@@ -1156,17 +1163,16 @@
             <span id="duration">0:00</span>
         </div>
         <div class="music-controls">
-            <button class="control-button" id="prevButton" title="Previous">⏮</button>
-            <button class="control-button play-button" id="playButton" title="Play">▶</button>
-            <button class="control-button" id="nextButton" title="Next">⏭</button>
+            <button class="control-button" id="prevButton" title="Lagu Sebelumnya">⏮</button>
+            <button class="control-button play-button" id="playButton" title="Putar">▶</button>
+            <button class="control-button" id="nextButton" title="Lagu Berikutnya">⏭</button>
         </div>
         <div class="volume-control">
             <span>🔊</span>
-            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.1" value="0.5">
+            <input type="range" min="0" max="100" value="50" class="volume-slider" id="volumeSlider">
         </div>
     </div>
 
-    <!-- Contact Panel -->
     <div class="contact-panel" id="contactPanel">
         <div class="contact-header">
             <div class="contact-title">Kontak Developer</div>
@@ -1180,27 +1186,28 @@
                     <div class="contact-description">+62 812-3456-7890</div>
                 </div>
             </a>
-            <a href="https://t.me/elaina_developer" target="_blank" class="contact-item">
+            <a href="https://t.me/username" target="_blank" class="contact-item">
                 <div class="contact-icon telegram-icon">✈️</div>
                 <div class="contact-info">
                     <div class="contact-name">Telegram</div>
-                    <div class="contact-description">@elaina_developer</div>
+                    <div class="contact-description">@username</div>
                 </div>
             </a>
-            <a href="https://t.me/elaina_channel" target="_blank" class="contact-item">
+            <a href="https://t.me/channelname" target="_blank" class="contact-item">
                 <div class="contact-icon channel-icon">📢</div>
                 <div class="contact-info">
-                    <div class="contact-name">Channel Update</div>
-                    <div class="contact-description">@elaina_channel</div>
+                    <div class="contact-name">Channel Telegram</div>
+                    <div class="contact-description">@channelname</div>
                 </div>
             </a>
         </div>
     </div>
 
     <script>
-        // Session management
-        let currentSessionId = localStorage.getItem('sessionId');
-        
+        // API Configuration
+        const API_KEY = "sk-xxx"; // Ganti dengan API key Anda
+        const API_URL = "https://api.openai.com/v1/chat/completions";
+
         // DOM Elements
         const chatMessages = document.getElementById('chatMessages');
         const messageInput = document.getElementById('messageInput');
@@ -1211,407 +1218,572 @@
         const musicToggle = document.getElementById('musicToggle');
         const musicPlayer = document.getElementById('musicPlayer');
         const closeMusicPlayer = document.getElementById('closeMusicPlayer');
-        const playButton = document.getElementById('playButton');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressBar = document.getElementById('progressBar');
-        const currentTime = document.getElementById('currentTime');
-        const duration = document.getElementById('duration');
-        const volumeSlider = document.getElementById('volumeSlider');
         const contactToggle = document.getElementById('contactToggle');
         const contactPanel = document.getElementById('contactPanel');
         const closeContactPanel = document.getElementById('closeContactPanel');
         const usernameDisplay = document.getElementById('usernameDisplay');
         const userBadge = document.getElementById('userBadge');
 
-        // Audio setup
-        const audio = new Audio();
-        let isPlaying = false;
-        let isDragging = false;
+        // Music player elements
+        const playButton = document.getElementById('playButton');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = document.getElementById('progressContainer');
+        const currentTimeElement = document.getElementById('currentTime');
+        const durationElement = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const trackName = document.getElementById('trackName');
+        const trackArtist = document.getElementById('trackArtist');
+        const trackCover = document.getElementById('trackCover');
 
-        // Check authentication and load user info
-        checkAuthStatus();
+        // State variables
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        let isMusicPlaying = false;
+        let currentTrackIndex = 0;
+        let audio = new Audio();
+        let currentTimeInterval;
+        let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
 
-        // Theme Management
-        function initTheme() {
-            const savedTheme = localStorage.getItem('darkMode') || 'light';
-            document.body.classList.toggle('dark-mode', savedTheme === 'true');
-            updateThemeIcon();
+        // Sample music tracks
+        const musicTracks = [
+            {
+                name: "Lofi Study",
+                artist: "Chillhop Music",
+                src: "https://files.catbox.moe/example1.mp3",
+                cover: "https://files.catbox.moe/4zrnsf.jpeg"
+            },
+            {
+                name: "Ambient Relaxation",
+                artist: "Atmospheric Sounds",
+                src: "https://files.catbox.moe/example2.mp3",
+                cover: "https://files.catbox.moe/4zrnsf.jpeg"
+            },
+            {
+                name: "Jazz Vibes",
+                artist: "Coffee Shop Jazz",
+                src: "https://files.catbox.moe/example3.mp3",
+                cover: "https://files.catbox.moe/4zrnsf.jpeg"
+            }
+        ];
+
+        // Initialize the app
+        function init() {
+            applyTheme();
+            loadChatHistory();
+            setupEventListeners();
+            setupMusicPlayer();
+            updateUserInfo();
+            
+            // PERBAIKAN: Fokus ke input pesan saat halaman dimuat
+            setTimeout(() => {
+                messageInput.focus();
+            }, 500);
         }
 
-        function updateThemeIcon() {
-            const isDark = document.body.classList.contains('dark-mode');
-            themeToggle.textContent = isDark ? '☀️' : '🌙';
-        }
-
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('darkMode', isDark);
-            updateThemeIcon();
-        });
-
-        // Authentication check
-        async function checkAuthStatus() {
-            try {
-                const response = await fetch('/api/auth/status', {
-                    headers: {
-                        'Authorization': `Bearer ${currentSessionId}`
-                    }
-                });
-                const data = await response.json();
-                
-                if (!data.isAuthenticated) {
-                    window.location.href = '/';
-                    return;
-                }
-
-                // Display user info
-                const savedUsername = localStorage.getItem('username') || data.username;
-                const savedIsDeveloper = localStorage.getItem('isDeveloper') === 'true' || data.isDeveloper;
-                
-                usernameDisplay.textContent = savedUsername;
-                userBadge.textContent = savedIsDeveloper ? 'Developer' : 'User';
-                
-                if (savedIsDeveloper) {
-                    userBadge.classList.add('developer');
-                }
-
-                // Load chat history
-                loadChatHistory();
-            } catch (error) {
-                console.error('Auth check error:', error);
-                window.location.href = '/';
+        // Apply theme based on user preference
+        function applyTheme() {
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeToggle.textContent = '🌙';
             }
         }
 
-        // Load chat history
-        async function loadChatHistory() {
-            try {
-                const response = await fetch('/api/chat/history', {
-                    headers: {
-                        'Authorization': `Bearer ${currentSessionId}`
-                    }
-                });
-                const data = await response.json();
-                
-                const welcomeMessage = chatMessages.querySelector('.welcome-message');
-                if (welcomeMessage && data.messages && data.messages.length > 0) {
+        // Load chat history from localStorage
+        function loadChatHistory() {
+            if (chatHistory.length > 0) {
+                // Clear welcome message
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
                     welcomeMessage.remove();
                 }
+
+                // Add messages from history
+                chatHistory.forEach(msg => {
+                    addMessageToChat(msg.content, msg.role, msg.timestamp, false);
+                });
                 
-                // Add messages to chat
-                if (data.messages) {
-                    data.messages.forEach(message => {
-                        addMessageToChat(message.text, message.role === 'user');
-                    });
-                }
-                
+                // PERBAIKAN: Scroll ke bawah setelah memuat riwayat
                 scrollToBottom();
-            } catch (error) {
-                console.error('Error loading chat history:', error);
             }
         }
 
-        // Message Handling - TERINTEGRASI DENGAN API GEMINI
+        // Setup event listeners
+        function setupEventListeners() {
+            // Send message on button click
+            sendButton.addEventListener('click', sendMessage);
+
+            // Send message on Enter key (but allow Shift+Enter for new line)
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Auto-resize textarea
+            messageInput.addEventListener('input', autoResizeTextarea);
+
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // Logout button
+            logoutButton.addEventListener('click', logout);
+
+            // Music player controls
+            musicToggle.addEventListener('click', toggleMusicPlayer);
+            closeMusicPlayer.addEventListener('click', closeMusic);
+
+            // Contact panel controls
+            contactToggle.addEventListener('click', toggleContactPanel);
+            closeContactPanel.addEventListener('click', closeContactPanelHandler);
+
+            // Close panels when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!musicPlayer.contains(e.target) && !musicToggle.contains(e.target) && musicPlayer.classList.contains('active')) {
+                    closeMusic();
+                }
+                
+                if (!contactPanel.contains(e.target) && !contactToggle.contains(e.target) && contactPanel.classList.contains('active')) {
+                    closeContactPanelHandler();
+                }
+            });
+
+            // PERBAIKAN: Mencegah zoom pada double-tap
+            document.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(e) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // PERBAIKAN: Mencegah zoom pada gesture pinch
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
+            document.addEventListener('gesturechange', function(e) {
+                e.preventDefault();
+            });
+            document.addEventListener('gestureend', function(e) {
+                e.preventDefault();
+            });
+        }
+
+        // Setup music player
+        function setupMusicPlayer() {
+            // Play/pause button
+            playButton.addEventListener('click', togglePlayPause);
+
+            // Previous and next buttons
+            prevButton.addEventListener('click', playPreviousTrack);
+            nextButton.addEventListener('click', playNextTrack);
+
+            // Progress bar
+            progressContainer.addEventListener('click', setProgress);
+
+            // Volume control
+            volumeSlider.addEventListener('input', setVolume);
+
+            // Audio events
+            audio.addEventListener('loadedmetadata', setAudioDuration);
+            audio.addEventListener('timeupdate', updateProgress);
+            audio.addEventListener('ended', playNextTrack);
+
+            // Load first track
+            loadTrack(currentTrackIndex);
+        }
+
+        // Auto-resize textarea based on content
+        function autoResizeTextarea() {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
+        }
+
+        // Toggle theme between light and dark mode
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('darkMode', isDarkMode);
+            applyTheme();
+        }
+
+        // Toggle music player visibility
+        function toggleMusicPlayer() {
+            if (musicPlayer.classList.contains('active')) {
+                closeMusic();
+            } else {
+                closeContactPanelHandler();
+                musicPlayer.classList.add('active');
+            }
+        }
+
+        // Close music player
+        function closeMusic() {
+            musicPlayer.classList.remove('active');
+        }
+
+        // Toggle contact panel visibility
+        function toggleContactPanel() {
+            if (contactPanel.classList.contains('active')) {
+                closeContactPanelHandler();
+            } else {
+                closeMusic();
+                contactPanel.classList.add('active');
+            }
+        }
+
+        // Close contact panel
+        function closeContactPanelHandler() {
+            contactPanel.classList.remove('active');
+        }
+
+        // Update user info display
+        function updateUserInfo() {
+            // In a real app, this would fetch user data from an API
+            const username = localStorage.getItem('username') || 'Pengguna';
+            const userType = localStorage.getItem('userType') || 'User';
+            
+            usernameDisplay.textContent = username;
+            userBadge.textContent = userType;
+            
+            if (userType === 'Developer') {
+                userBadge.classList.add('developer');
+            } else {
+                userBadge.classList.remove('developer');
+            }
+        }
+
+        // Send message to AI
         async function sendMessage() {
             const message = messageInput.value.trim();
+            
             if (!message) return;
-
+            
+            // Add user message to chat
+            addMessageToChat(message, 'user');
+            
             // Clear input and reset height
             messageInput.value = '';
             messageInput.style.height = 'auto';
             
-            // Add user message to chat
-            addMessageToChat(message, true);
-            
             // Show typing indicator
             typingIndicator.classList.add('active');
-            scrollToBottom();
-
-            // Disable input while waiting for response
-            messageInput.disabled = true;
+            
+            // Disable send button while waiting for response
             sendButton.disabled = true;
-
+            
             try {
-                const response = await fetch('/api/chat', {
+                // Send message to API
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentSessionId}`
+                        'Authorization': `Bearer ${API_KEY}`
                     },
-                    body: JSON.stringify({ 
-                        message,
-                        sessionId: currentSessionId 
+                    body: JSON.stringify({
+                        model: "gpt-3.5-turbo",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "Anda adalah asisten AI yang membantu dan ramah. Berikan jawaban yang informatif dan mudah dipahami."
+                            },
+                            ...chatHistory.map(msg => ({
+                                role: msg.role,
+                                content: msg.content
+                            })),
+                            {
+                                role: "user",
+                                content: message
+                            }
+                        ],
+                        max_tokens: 1000,
+                        temperature: 0.7
                     })
                 });
-
-                const data = await response.json();
-
-                if (data.reply) {
-                    addMessageToChat(data.reply, false);
-                } else if (data.error) {
-                    addMessageToChat('❌ Maaf, terjadi kesalahan: ' + data.error, false);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                
+                const data = await response.json();
+                const aiResponse = data.choices[0].message.content;
+                
+                // Add AI response to chat
+                addMessageToChat(aiResponse, 'assistant');
+                
             } catch (error) {
-                addMessageToChat('❌ Maaf, terjadi kesalahan koneksi. Silakan coba lagi.', false);
-                console.error('Chat error:', error);
+                console.error('Error sending message:', error);
+                addMessageToChat('Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi.', 'assistant');
             } finally {
+                // Hide typing indicator and re-enable send button
                 typingIndicator.classList.remove('active');
-                messageInput.disabled = false;
                 sendButton.disabled = false;
+                
+                // PERBAIKAN: Fokus kembali ke input setelah mengirim pesan
                 messageInput.focus();
-                scrollToBottom();
             }
         }
 
-        function addMessageToChat(message, isUser) {
-            // Remove welcome message if it's the first user message
-            const welcomeMessage = chatMessages.querySelector('.welcome-message');
-            if (welcomeMessage && isUser) {
+        // Add message to chat UI
+        function addMessageToChat(content, role, timestamp = null, saveToHistory = true) {
+            // Remove welcome message if it exists
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage && (role === 'user' || role === 'assistant')) {
                 welcomeMessage.remove();
             }
             
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            // Create message element
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${role}-message`;
             
+            // Format timestamp
+            const messageTime = timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // Create message bubble
             const messageBubble = document.createElement('div');
             messageBubble.className = 'message-bubble';
             
-            // Process message content for code blocks
-            const processedContent = processMessageContent(message);
+            // Process content for code blocks and links
+            const processedContent = processMessageContent(content);
             messageBubble.innerHTML = processedContent;
             
-            const timeDiv = document.createElement('div');
-            timeDiv.className = 'message-time';
-            timeDiv.textContent = new Date().toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
+            // Create timestamp
+            const timeElement = document.createElement('div');
+            timeElement.className = 'message-time';
+            timeElement.textContent = messageTime;
             
-            messageDiv.appendChild(messageBubble);
-            messageDiv.appendChild(timeDiv);
-            chatMessages.appendChild(messageDiv);
+            // Assemble message
+            messageElement.appendChild(messageBubble);
+            messageElement.appendChild(timeElement);
             
+            // Add to chat
+            chatMessages.appendChild(messageElement);
+            
+            // PERBAIKAN: Scroll ke bawah setelah menambahkan pesan baru
             scrollToBottom();
             
+            // Save to history if needed
+            if (saveToHistory) {
+                const messageData = {
+                    content: content,
+                    role: role,
+                    timestamp: messageTime
+                };
+                
+                chatHistory.push(messageData);
+                
+                // Keep only last 50 messages to prevent localStorage overflow
+                if (chatHistory.length > 50) {
+                    chatHistory = chatHistory.slice(-50);
+                }
+                
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            }
+            
             // Add copy functionality to code blocks
-            addCopyFunctionality(messageBubble);
+            addCopyButtons();
         }
 
+        // Process message content for code blocks and links
         function processMessageContent(content) {
-            // Simple code block detection and formatting
-            return content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-                const language = lang || 'text';
+            // Replace code blocks with formatted HTML
+            let processed = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+                const lang = language || 'text';
                 return `
                     <div class="code-block">
                         <div class="code-header">
-                            <span class="code-language">${language}</span>
-                            <button class="copy-button" onclick="copyCode(this)">📋 Copy</button>
+                            <span class="code-language">${lang}</span>
+                            <button class="copy-button" data-code="${encodeURIComponent(code)}">📋 Salin</button>
                         </div>
                         <div class="code-content">${escapeHtml(code.trim())}</div>
                     </div>
                 `;
             });
+            
+            // Replace inline code
+            processed = processed.replace(/`([^`]+)`/g, '<code style="background: var(--border-color); padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-family: monospace;">$1</code>');
+            
+            // Replace URLs with clickable links
+            processed = processed.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color: var(--primary-color); text-decoration: underline;">$1</a>');
+            
+            // Replace newlines with <br>
+            processed = processed.replace(/\n/g, '<br>');
+            
+            return processed;
         }
 
+        // Escape HTML to prevent XSS
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        function addCopyFunctionality(element) {
-            const copyButtons = element.querySelectorAll('.copy-button');
+        // Add copy buttons to code blocks
+        function addCopyButtons() {
+            const copyButtons = document.querySelectorAll('.copy-button');
+            
             copyButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const codeContent = this.closest('.code-block').querySelector('.code-content').textContent;
-                    copyToClipboard(codeContent);
+                button.addEventListener('click', async () => {
+                    const code = decodeURIComponent(button.getAttribute('data-code'));
                     
-                    // Visual feedback
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '✅ Copied!';
-                    this.classList.add('copied');
-                    
-                    setTimeout(() => {
-                        this.innerHTML = originalText;
-                        this.classList.remove('copied');
-                    }, 2000);
+                    try {
+                        await navigator.clipboard.writeText(code);
+                        
+                        // Visual feedback
+                        const originalText = button.innerHTML;
+                        button.innerHTML = '✅ Disalin!';
+                        button.classList.add('copied');
+                        
+                        setTimeout(() => {
+                            button.innerHTML = originalText;
+                            button.classList.remove('copied');
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                        // Fallback for older browsers
+                        const textArea = document.createElement('textarea');
+                        textArea.value = code;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        
+                        // Visual feedback for fallback
+                        const originalText = button.innerHTML;
+                        button.innerHTML = '✅ Disalin!';
+                        button.classList.add('copied');
+                        
+                        setTimeout(() => {
+                            button.innerHTML = originalText;
+                            button.classList.remove('copied');
+                        }, 2000);
+                    }
                 });
             });
         }
 
-        function copyToClipboard(text) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-        }
-
+        // PERBAIKAN: Fungsi untuk scroll ke bawah chat
         function scrollToBottom() {
+            // Gunakan setTimeout untuk memastikan DOM sudah diupdate
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 100);
         }
 
-        // Input Handling
-        function adjustTextareaHeight() {
-            messageInput.style.height = 'auto';
-            messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
-        }
-
-        // Event Listeners
-        sendButton.addEventListener('click', sendMessage);
-
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        messageInput.addEventListener('input', adjustTextareaHeight);
-
-        // Music Player Functions
-        function toggleMusicPlayer() {
-            musicPlayer.classList.toggle('active');
-            if (musicPlayer.classList.contains('active')) {
-                contactPanel.classList.remove('active');
+        // Music player functions
+        function loadTrack(index) {
+            const track = musicTracks[index];
+            audio.src = track.src;
+            trackName.textContent = track.name;
+            trackArtist.textContent = track.artist;
+            trackCover.src = track.cover;
+            
+            // Reset progress
+            progressBar.style.width = '0%';
+            currentTimeElement.textContent = '0:00';
+            
+            // If music was playing, continue playing
+            if (isMusicPlaying) {
+                audio.play();
             }
         }
 
         function togglePlayPause() {
-            if (isPlaying) {
-                audio.pause();
-                playButton.innerHTML = '▶';
+            if (isMusicPlaying) {
+                pauseMusic();
             } else {
-                audio.play().catch(e => console.log('Audio play failed:', e));
-                playButton.innerHTML = '⏸';
+                playMusic();
             }
-            isPlaying = !isPlaying;
         }
 
-        function setupAudio() {
-            // Set audio source
-            audio.src = 'https://files.catbox.moe/ve0lvk.mp3';
+        function playMusic() {
+            audio.play();
+            isMusicPlaying = true;
+            playButton.innerHTML = '⏸';
+        }
+
+        function pauseMusic() {
+            audio.pause();
+            isMusicPlaying = false;
+            playButton.innerHTML = '▶';
+        }
+
+        function playNextTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
+            loadTrack(currentTrackIndex);
+            if (isMusicPlaying) {
+                playMusic();
+            }
+        }
+
+        function playPreviousTrack() {
+            currentTrackIndex = (currentTrackIndex - 1 + musicTracks.length) % musicTracks.length;
+            loadTrack(currentTrackIndex);
+            if (isMusicPlaying) {
+                playMusic();
+            }
+        }
+
+        function setProgress(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
             
-            audio.addEventListener('loadedmetadata', () => {
-                duration.textContent = formatTime(audio.duration);
-            });
+            audio.currentTime = (clickX / width) * duration;
+        }
 
-            audio.addEventListener('timeupdate', () => {
-                if (!isDragging) {
-                    const progress = (audio.currentTime / audio.duration) * 100;
-                    progressBar.style.width = `${progress}%`;
-                    currentTime.textContent = formatTime(audio.currentTime);
-                }
-            });
+        function updateProgress() {
+            if (audio.duration) {
+                const progressPercent = (audio.currentTime / audio.duration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                
+                // Update time display
+                currentTimeElement.textContent = formatTime(audio.currentTime);
+            }
+        }
 
-            audio.addEventListener('ended', () => {
-                isPlaying = false;
-                playButton.innerHTML = '▶';
-                progressBar.style.width = '0%';
-                currentTime.textContent = '0:00';
-            });
+        function setAudioDuration() {
+            durationElement.textContent = formatTime(audio.duration);
+        }
 
-            volumeSlider.addEventListener('input', () => {
-                audio.volume = volumeSlider.value;
-            });
+        function setVolume() {
+            audio.volume = volumeSlider.value / 100;
         }
 
         function formatTime(seconds) {
             if (isNaN(seconds)) return '0:00';
-            const mins = Math.floor(seconds / 60);
+            
+            const minutes = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
-        // Progress bar seeking
-        progressContainer.addEventListener('click', (e) => {
-            const rect = progressContainer.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = percent * audio.duration;
-        });
-
-        // Contact Panel Functions
-        function toggleContactPanel() {
-            contactPanel.classList.toggle('active');
-            if (contactPanel.classList.contains('active')) {
-                musicPlayer.classList.remove('active');
-            }
-        }
-
-        // Logout functionality
-        logoutButton.addEventListener('click', async function() {
+        // Logout function
+        function logout() {
             if (confirm('Apakah Anda yakin ingin logout?')) {
-                try {
-                    const response = await fetch('/api/auth/logout', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${currentSessionId}`
-                        },
-                        body: JSON.stringify({ sessionId: currentSessionId })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        // Clear localStorage
-                        localStorage.removeItem('sessionId');
-                        localStorage.removeItem('username');
-                        localStorage.removeItem('isDeveloper');
-                        currentSessionId = null;
-                        
-                        window.location.href = '/';
-                    } else {
-                        alert('Gagal logout: ' + data.error);
-                    }
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    alert('Terjadi kesalahan saat logout');
-                }
+                // Clear chat history and user data
+                localStorage.removeItem('chatHistory');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userType');
+                
+                // Redirect to login page or reload
+                window.location.reload();
             }
-        });
-
-        // Initialize
-        function init() {
-            initTheme();
-            setupAudio();
-            
-            // Close panels when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!musicPlayer.contains(e.target) && !musicToggle.contains(e.target)) {
-                    musicPlayer.classList.remove('active');
-                }
-                if (!contactPanel.contains(e.target) && !contactToggle.contains(e.target)) {
-                    contactPanel.classList.remove('active');
-                }
-            });
-
-            // Event listeners for music player
-            musicToggle.addEventListener('click', toggleMusicPlayer);
-            closeMusicPlayer.addEventListener('click', () => {
-                musicPlayer.classList.remove('active');
-            });
-            playButton.addEventListener('click', togglePlayPause);
-
-            // Event listeners for contact panel
-            contactToggle.addEventListener('click', toggleContactPanel);
-            closeContactPanel.addEventListener('click', () => {
-                contactPanel.classList.remove('active');
-            });
-
-            // Initial scroll to bottom
-            scrollToBottom();
-            
-            // Auto-focus on message input
-            messageInput.focus();
         }
 
-        // Start the application
-        init();
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
