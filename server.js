@@ -20,11 +20,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
-// Session storage (persistent)
+// Session storage (persistent) dengan expiration
 const sessions = new Map();
 
 // MongoDB Connection
@@ -121,15 +124,38 @@ function blockKey(key) {
   if (item) item.blocked = true;
 }
 
-// Authentication middleware - FIXED
+// Authentication middleware - IMPROVED
 function requireAuth(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '') || req.body.sessionId;
+  let token = req.headers.authorization?.replace('Bearer ', '') || 
+              req.body.sessionId || 
+              req.query.sessionId;
+
+  // Try to get from cookies if no token found
+  if (!token && req.headers.cookie) {
+    const cookieMatch = req.headers.cookie.match(/sessionId=([^;]+)/);
+    if (cookieMatch) {
+      token = cookieMatch[1];
+    }
+  }
   
   if (!token || !sessions.has(token)) {
     return res.status(401).json({ error: 'Silakan login terlebih dahulu' });
   }
   
-  req.user = sessions.get(token);
+  const session = sessions.get(token);
+  
+  // Check if session is expired
+  if (session.expires < Date.now()) {
+    sessions.delete(token);
+    return res.status(401).json({ error: 'Session telah kadaluarsa' });
+  }
+  
+  // Update session expiration
+  session.expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+  sessions.set(token, session);
+  
+  req.user = session;
+  req.sessionId = token;
   next();
 }
 
@@ -140,14 +166,28 @@ app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/chat.html', (req, res) => {
+app.get('/chat.html', requireAuth, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'chat.html'));
 });
 
-// Auth status - FIXED
+// Auth status - IMPROVED
 app.get('/api/auth/status', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '') || req.query.sessionId;
+  let token = req.headers.authorization?.replace('Bearer ', '') || req.query.sessionId;
+  
+  // Try to get from cookies
+  if (!token && req.headers.cookie) {
+    const cookieMatch = req.headers.cookie.match(/sessionId=([^;]+)/);
+    if (cookieMatch) {
+      token = cookieMatch[1];
+    }
+  }
+  
   const session = token ? sessions.get(token) : null;
+  
+  if (session && session.expires < Date.now()) {
+    sessions.delete(token);
+    return res.json({ isAuthenticated: false });
+  }
   
   res.json({ 
     isAuthenticated: !!session,
@@ -156,7 +196,7 @@ app.get('/api/auth/status', (req, res) => {
   });
 });
 
-// Register - FIXED
+// Register - IMPROVED
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -191,16 +231,19 @@ app.post('/api/auth/register', async (req, res) => {
     });
     
     const sessionId = generateSessionId();
-    sessions.set(sessionId, {
+    const sessionData = {
       userId: result.insertedId.toString(),
       username,
-      isDeveloper: false
-    });
+      isDeveloper: false,
+      expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+    };
+    
+    sessions.set(sessionId, sessionData);
     
     res.json({ 
       success: true, 
       message: 'Registrasi berhasil!',
-      sessionId, // KIRIM sessionId KE CLIENT
+      sessionId,
       username,
       isDeveloper: false
     });
@@ -211,7 +254,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// Login - FIXED
+// Login - IMPROVED
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -247,16 +290,19 @@ app.post('/api/auth/login', async (req, res) => {
       }
       
       const sessionId = generateSessionId();
-      sessions.set(sessionId, {
+      const sessionData = {
         userId: developer._id.toString(),
         username: developerUsername,
-        isDeveloper: true
-      });
+        isDeveloper: true,
+        expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      };
+      
+      sessions.set(sessionId, sessionData);
       
       return res.json({ 
         success: true, 
         message: 'Login developer berhasil!',
-        sessionId, // KIRIM sessionId KE CLIENT
+        sessionId,
         username: developerUsername,
         isDeveloper: true
       });
@@ -274,16 +320,19 @@ app.post('/api/auth/login', async (req, res) => {
     }
     
     const sessionId = generateSessionId();
-    sessions.set(sessionId, {
+    const sessionData = {
       userId: user._id.toString(),
       username: user.username,
-      isDeveloper: user.isDeveloper || false
-    });
+      isDeveloper: user.isDeveloper || false,
+      expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+    };
+    
+    sessions.set(sessionId, sessionData);
     
     res.json({ 
       success: true, 
       message: 'Login berhasil!',
-      sessionId, // KIRIM sessionId KE CLIENT
+      sessionId,
       username: user.username,
       isDeveloper: user.isDeveloper || false
     });
@@ -294,16 +343,25 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Logout - FIXED
+// Logout - IMPROVED
 app.post('/api/auth/logout', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '') || req.body.sessionId;
+  let token = req.headers.authorization?.replace('Bearer ', '') || req.body.sessionId;
+  
+  // Try to get from cookies
+  if (!token && req.headers.cookie) {
+    const cookieMatch = req.headers.cookie.match(/sessionId=([^;]+)/);
+    if (cookieMatch) {
+      token = cookieMatch[1];
+    }
+  }
+  
   if (token) {
     sessions.delete(token);
   }
   res.json({ success: true, message: 'Logout berhasil' });
 });
 
-// Chat endpoint - FIXED
+// Chat endpoint - IMPROVED
 app.post('/api/chat', requireAuth, async (req, res) => {
   const { message } = req.body;
   const user = req.user;
@@ -362,7 +420,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
   }
 });
 
-// Get chat history - FIXED
+// Get chat history - IMPROVED
 app.get('/api/chat/history', requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -391,12 +449,24 @@ app.get('/api/health', (req, res) => {
 
 // Helper functions
 function generateSessionId() {
-  return 'session_' + Math.random().toString(36).substr(2, 16);
+  return 'session_' + Math.random().toString(36).substr(2, 16) + '_' + Date.now();
 }
 
 // Clean up expired sessions every hour
 setInterval(() => {
-  console.log(`🧹 Cleaning sessions. Current: ${sessions.size}`);
+  const now = Date.now();
+  let expiredCount = 0;
+  
+  for (const [sessionId, session] of sessions.entries()) {
+    if (session.expires < now) {
+      sessions.delete(sessionId);
+      expiredCount++;
+    }
+  }
+  
+  if (expiredCount > 0) {
+    console.log(`🧹 Cleaned ${expiredCount} expired sessions. Current: ${sessions.size}`);
+  }
 }, 60 * 60 * 1000);
 
 // Start server
