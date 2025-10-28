@@ -158,8 +158,17 @@ const authenticateToken = async (req, res, next) => {
 };
 
 // Routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+
+// Serve static files - HARUS di atas route lainnya
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API Routes
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+  });
 });
 
 // Register Endpoint
@@ -338,18 +347,9 @@ app.get('/api/chat/history/:sessionId', authenticateToken, async (req, res) => {
   }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
-  });
-});
-
-// Handle 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint tidak ditemukan' });
+// Catch-all handler - HARUS di paling bawah
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Initialize and start server
@@ -357,5 +357,6 @@ initializeDeveloper().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Elaina AI Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📁 Static files served from: ${path.join(__dirname, 'public')}`);
   });
 });
