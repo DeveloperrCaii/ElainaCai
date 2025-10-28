@@ -44,28 +44,32 @@ async function connectDB() {
     await createAdminUser();
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
+    // Don't exit process for Vercel
   }
 }
 
 async function createAdminUser() {
-  const adminExists = await usersCollection.findOne({ username: process.env.ADMIN_USERNAME || 'admin' });
-  if (!adminExists) {
-    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 10);
-    await usersCollection.insertOne({
-      username: process.env.ADMIN_USERNAME || 'admin',
-      password: hashedPassword,
-      role: 'admin',
-      createdAt: new Date(),
-      isDeveloper: true
-    });
-    console.log('👑 Admin user created');
+  try {
+    const adminExists = await usersCollection.findOne({ username: process.env.ADMIN_USERNAME || 'admin' });
+    if (!adminExists) {
+      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 10);
+      await usersCollection.insertOne({
+        username: process.env.ADMIN_USERNAME || 'admin',
+        password: hashedPassword,
+        role: 'admin',
+        createdAt: new Date(),
+        isDeveloper: true
+      });
+      console.log('👑 Admin user created');
+    }
+  } catch (error) {
+    console.error('Error creating admin user:', error);
   }
 }
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(__dirname));
 
 // Session middleware
 app.use(session({
@@ -159,20 +163,28 @@ function blockKey(key) {
 
 const GEMINI_MODEL = "gemini-2.0-flash-exp";
 
-// Routes
+// Routes - HTML Routes
 app.get('/', (req, res) => {
   if (req.session.userId) {
     res.sendFile(path.join(__dirname, 'index.html'));
   } else {
-    res.redirect('/main/login.html');
+    res.sendFile(path.join(__dirname, 'login.html'));
   }
 });
 
-app.get('/main/login.html', (req, res) => {
+app.get('/login.html', (req, res) => {
   if (req.session.userId) {
     res.redirect('/');
   } else {
     res.sendFile(path.join(__dirname, 'login.html'));
+  }
+});
+
+app.get('/index.html', (req, res) => {
+  if (req.session.userId) {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  } else {
+    res.redirect('/login.html');
   }
 });
 
@@ -497,16 +509,28 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Handle 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint tidak ditemukan' });
+// Handle 404 for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint tidak ditemukan' });
+});
+
+// Handle all other routes - serve HTML
+app.get('*', (req, res) => {
+  if (req.session.userId) {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  } else {
+    res.sendFile(path.join(__dirname, 'login.html'));
+  }
 });
 
 // Initialize database and start server
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Elaina AI Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`👑 Admin username: ${process.env.ADMIN_USERNAME || 'admin'}`);
   });
+}).catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });
