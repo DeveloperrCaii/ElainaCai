@@ -28,7 +28,12 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
-app.use(express.static(join(__dirname, 'public')));
+
+// Serve static files - FIXED for Vercel
+app.use(express.static(join(__dirname, 'public'), {
+  index: false, // Don't serve index.html automatically
+  extensions: ['html', 'htm'] // Only serve these extensions
+}));
 
 // Session middleware - Optimized for Vercel
 app.use(session({
@@ -51,7 +56,8 @@ const MONGODB_URI = process.env.MONGODB_URI;
 async function connectDB() {
   try {
     if (!MONGODB_URI) {
-      throw new Error('MONGODB_URI environment variable is required');
+      console.error('❌ MONGODB_URI environment variable is required');
+      return;
     }
 
     client = new MongoClient(MONGODB_URI, {
@@ -67,13 +73,12 @@ async function connectDB() {
     // Create indexes
     await db.collection('users').createIndex({ username: 1 }, { unique: true });
     await db.collection('chat_sessions').createIndex({ userId: 1 });
-    await db.collection('chat_sessions').createIndex({ lastActivity: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 }); // 30 days TTL
+    await db.collection('chat_sessions').createIndex({ lastActivity: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
     
     // Initialize developer account
     await initializeDeveloperAccount();
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    if (process.env.NODE_ENV === 'development') process.exit(1);
   }
 }
 
@@ -101,8 +106,6 @@ async function initializeDeveloperAccount() {
         lastLogin: new Date()
       });
       console.log('✅ Developer account initialized:', developerUsername);
-    } else {
-      console.log('✅ Developer account already exists:', developerUsername);
     }
   } catch (error) {
     console.error('Error initializing developer account:', error);
@@ -514,9 +517,12 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'Endpoint tidak ditemukan' });
 });
 
-// 404 Handler for other routes
-app.use('*', (req, res) => {
-  res.status(404).sendFile(join(__dirname, 'public', 'index.html'));
+// Serve static files for all other routes
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  res.sendFile(join(__dirname, 'public', 'index.html'));
 });
 
 // Global error handler
@@ -536,7 +542,7 @@ async function startServer() {
   try {
     await connectDB();
     
-    const server = app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, () => {
       console.log('='.repeat(50));
       console.log(`🚀 Elaina AI Server berhasil dijalankan`);
       console.log(`📍 Port: ${PORT}`);
