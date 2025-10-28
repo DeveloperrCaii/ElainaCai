@@ -921,11 +921,13 @@
             .input-container {
                 padding: 0.5rem;
                 min-height: 60px;
+                align-items: center;
             }
             
             .message-input {
                 min-height: 40px;
                 padding: 0.5rem 0.75rem;
+                height: 40px;
             }
             
             .send-button {
@@ -1001,6 +1003,24 @@
             .chat-container {
                 height: calc(100vh - 100px);
             }
+            
+            .input-container {
+                padding: 0.5rem;
+                min-height: 55px;
+                align-items: center;
+            }
+            
+            .message-input {
+                min-height: 38px;
+                padding: 0.5rem 0.75rem;
+                height: 38px;
+            }
+            
+            .send-button {
+                min-width: 38px;
+                min-height: 38px;
+                padding: 0.5rem;
+            }
         }
 
         /* Landscape orientation support */
@@ -1020,8 +1040,48 @@
             }
             
             .input-container {
-                min-height: 50px;
+                min-height: 45px;
                 padding: 0.5rem;
+                align-items: center;
+            }
+            
+            .message-input {
+                min-height: 35px;
+                padding: 0.5rem 0.75rem;
+                height: 35px;
+            }
+            
+            .send-button {
+                min-width: 35px;
+                min-height: 35px;
+                padding: 0.5rem;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-height: 400px) {
+            .input-container {
+                min-height: 40px;
+                padding: 0.4rem;
+                align-items: center;
+            }
+            
+            .message-input {
+                min-height: 32px;
+                padding: 0.4rem 0.6rem;
+                height: 32px;
+                font-size: 0.85rem;
+            }
+            
+            .send-button {
+                min-width: 32px;
+                min-height: 32px;
+                padding: 0.4rem;
+            }
+            
+            .send-button svg {
+                width: 14px;
+                height: 14px;
             }
         }
 
@@ -1089,49 +1149,46 @@
         </div>
     </div>
 
-    <!-- Contact Panel -->
-    <div class="contact-panel" id="contactPanel">
-        <div class="contact-header">
-            <div class="contact-title">Hubungi Developer</div>
-            <button class="close-button" id="closeContact">✕</button>
-        </div>
-        <div class="contact-list">
-            <a href="https://wa.me/6281249864586" target="_blank" class="contact-item">
-                <div class="contact-icon whatsapp-icon">📱</div>
-                <div class="contact-info">
-                    <div class="contact-name">WhatsApp</div>
-                    <div class="contact-description">Chat langsung</div>
-                </div>
-            </a>
-            <a href="https://t.me/Always_Lanz" target="_blank" class="contact-item">
-                <div class="contact-icon telegram-icon">✈️</div>
-                <div class="contact-info">
-                    <div class="contact-name">Telegram</div>
-                    <div class="contact-description">Pesan cepat</div>
-                </div>
-            </a>
-            <a href="https://whatsapp.com/channel/0029Vb597rgFMqreGGaKI22M" target="_blank" class="contact-item">
-                <div class="contact-icon channel-icon">📢</div>
-                <div class="contact-info">
-                    <div class="contact-name">Channel WhatsApp</div>
-                    <div class="contact-description">Update terbaru</div>
-                </div>
-            </a>
-        </div>
+    <div class="footer">
+        <div>© 2023 Elaina Assistant - Dibuat dengan ❤️ oleh Developer</div>
     </div>
 
     <!-- Music Player -->
     <div class="music-player" id="musicPlayer">
         <div class="music-header">
             <div class="music-title">Pemutar Musik</div>
-            <button class="close-button" id="closeMusic">✕</button>
+            <button class="close-button" id="closeMusicPlayer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
         <div class="track-info">
-            <img src="https://files.catbox.moe/4zrnsf.jpeg" alt="Album Cover" class="track-cover">
+            <img src="https://files.catbox.moe/4zrnsf.jpeg" alt="Track Cover" class="track-cover">
             <div class="track-details">
-                <div class="track-name" id="currentTrack">Relaxing Vibes</div>
-                <div class="track-artist" id="currentArtist">Elaina AI</div>
+                <div class="track-name">Elaina's Theme</div>
+                <div class="track-artist">AI Assistant</div>
             </div>
+        </div>
+        <div class="music-controls">
+            <button class="control-button" id="prevButton">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 20L9 12L19 4V20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="control-button play-button" id="playButton">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="playIcon">
+                    <path d="M5 3L19 12L5 21V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="control-button" id="nextButton">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 4L15 12L5 20V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
         <div class="progress-container" id="progressContainer">
             <div class="progress-bar" id="progressBar"></div>
@@ -1140,460 +1197,432 @@
             <span id="currentTime">0:00</span>
             <span id="duration">0:00</span>
         </div>
-        <div class="music-controls">
-            <button class="control-button" id="prevButton" title="Previous">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M19 20L9 12L19 4V20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M5 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <button class="play-button" id="playButton" title="Play/Pause">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="playIcon">
-                    <path d="M5 3L19 12L5 21V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <button class="control-button" id="nextButton" title="Next">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 4L15 12L5 20V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M19 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </div>
         <div class="volume-control">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34836 21.9979 12C21.9979 14.6516 20.9447 17.1947 19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M15.54 8.46C16.4774 9.39764 17.004 10.6692 17.004 11.995C17.004 13.3208 16.4774 14.5924 15.54 15.53" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15.54 8.46C16.4774 9.39764 17.004 10.6692 17.004 12C17.004 13.3308 16.4774 14.6024 15.54 15.54" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50" title="Volume">
+            <input type="range" min="0" max="100" value="50" class="volume-slider" id="volumeSlider">
         </div>
     </div>
 
-    <div class="footer">
-        Dibuat dengan ❤️ oleh alwayslanz | Elaina AI Assistant v2.0
+    <!-- Contact Panel -->
+    <div class="contact-panel" id="contactPanel">
+        <div class="contact-header">
+            <div class="contact-title">Hubungi Developer</div>
+            <button class="close-button" id="closeContactPanel">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="contact-list">
+            <a href="https://wa.me/6281234567890" target="_blank" class="contact-item">
+                <div class="contact-icon whatsapp-icon">📱</div>
+                <div class="contact-info">
+                    <div class="contact-name">WhatsApp</div>
+                    <div class="contact-description">Chat langsung dengan developer</div>
+                </div>
+            </a>
+            <a href="https://t.me/developer_elaina" target="_blank" class="contact-item">
+                <div class="contact-icon telegram-icon">✈️</div>
+                <div class="contact-info">
+                    <div class="contact-name">Telegram</div>
+                    <div class="contact-description">Kirim pesan melalui Telegram</div>
+                </div>
+            </a>
+            <a href="https://t.me/elaina_assistant" target="_blank" class="contact-item">
+                <div class="contact-icon channel-icon">📢</div>
+                <div class="contact-info">
+                    <div class="contact-name">Channel Updates</div>
+                    <div class="contact-description">Ikuti update terbaru Elaina</div>
+                </div>
+            </a>
+        </div>
     </div>
 
     <script>
-        // Prevent zoom on double-tap
-        document.addEventListener('dblclick', function(e) {
-            e.preventDefault();
-        }, { passive: false });
-
-        // Prevent zoom on pinch
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('gesturechange', function(e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('gestureend', function(e) {
-            e.preventDefault();
-        });
-
-        // Session management
-        let currentSessionId = localStorage.getItem('sessionId');
-        
-        // Check authentication and load user info
-        checkAuthStatus();
-
         // DOM Elements
         const chatMessages = document.getElementById('chatMessages');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
         const typingIndicator = document.getElementById('typingIndicator');
         const themeToggle = document.getElementById('themeToggle');
+        const logoutButton = document.getElementById('logoutButton');
         const musicToggle = document.getElementById('musicToggle');
+        const contactToggle = document.getElementById('contactToggle');
         const musicPlayer = document.getElementById('musicPlayer');
-        const closeMusic = document.getElementById('closeMusic');
+        const contactPanel = document.getElementById('contactPanel');
+        const closeMusicPlayer = document.getElementById('closeMusicPlayer');
+        const closeContactPanel = document.getElementById('closeContactPanel');
         const playButton = document.getElementById('playButton');
         const playIcon = document.getElementById('playIcon');
-        const prevButton = document.getElementById('prevButton');
-        const nextButton = document.getElementById('nextButton');
         const progressBar = document.getElementById('progressBar');
         const progressContainer = document.getElementById('progressContainer');
         const currentTimeEl = document.getElementById('currentTime');
         const durationEl = document.getElementById('duration');
         const volumeSlider = document.getElementById('volumeSlider');
-        const currentTrack = document.getElementById('currentTrack');
-        const currentArtist = document.getElementById('currentArtist');
-        const contactToggle = document.getElementById('contactToggle');
-        const contactPanel = document.getElementById('contactPanel');
-        const closeContact = document.getElementById('closeContact');
-        const logoutButton = document.getElementById('logoutButton');
         const usernameDisplay = document.getElementById('usernameDisplay');
         const userBadge = document.getElementById('userBadge');
 
-        // Theme toggle
-        themeToggle.addEventListener('click', function() {
-            document.body.classList.toggle('dark-mode');
-            this.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-        });
+        // State variables
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        let isPlaying = false;
+        let currentTime = 0;
+        let duration = 180; // 3 minutes in seconds
+        let progressInterval;
 
-        // Load saved theme
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark-mode');
-            themeToggle.textContent = '☀️';
+        // Initialize the app
+        function init() {
+            applyTheme();
+            setupEventListeners();
+            loadUserInfo();
+            autoResizeTextarea();
         }
 
-        // Contact panel toggle
-        contactToggle.addEventListener('click', function() {
-            contactPanel.classList.toggle('active');
-            if (contactPanel.classList.contains('active')) {
-                musicPlayer.classList.remove('active');
+        // Apply theme based on user preference
+        function applyTheme() {
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeToggle.textContent = '🌙';
             }
-        });
+            localStorage.setItem('darkMode', isDarkMode);
+        }
 
-        closeContact.addEventListener('click', function() {
-            contactPanel.classList.remove('active');
-        });
+        // Setup event listeners
+        function setupEventListeners() {
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Logout button
+            logoutButton.addEventListener('click', handleLogout);
+            
+            // Send message
+            sendButton.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Auto-resize textarea
+            messageInput.addEventListener('input', autoResizeTextarea);
+            
+            // Music player controls
+            musicToggle.addEventListener('click', () => togglePanel(musicPlayer));
+            contactToggle.addEventListener('click', () => togglePanel(contactPanel));
+            closeMusicPlayer.addEventListener('click', () => togglePanel(musicPlayer, false));
+            closeContactPanel.addEventListener('click', () => togglePanel(contactPanel, false));
+            
+            // Play/pause button
+            playButton.addEventListener('click', togglePlay);
+            
+            // Progress bar
+            progressContainer.addEventListener('click', setProgress);
+            
+            // Volume control
+            volumeSlider.addEventListener('input', setVolume);
+            
+            // Close panels when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!musicPlayer.contains(e.target) && !musicToggle.contains(e.target)) {
+                    togglePanel(musicPlayer, false);
+                }
+                if (!contactPanel.contains(e.target) && !contactToggle.contains(e.target)) {
+                    togglePanel(contactPanel, false);
+                }
+            });
+        }
 
-        // Music player toggle
-        musicToggle.addEventListener('click', function() {
-            musicPlayer.classList.toggle('active');
-            if (musicPlayer.classList.contains('active')) {
-                contactPanel.classList.remove('active');
-            }
-        });
+        // Toggle theme
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            applyTheme();
+        }
 
-        closeMusic.addEventListener('click', function() {
-            musicPlayer.classList.remove('active');
-        });
-
-        // Close panels when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!contactPanel.contains(event.target) && !contactToggle.contains(event.target)) {
-                contactPanel.classList.remove('active');
-            }
-            if (!musicPlayer.contains(event.target) && !musicToggle.contains(event.target)) {
-                musicPlayer.classList.remove('active');
-            }
-        });
-
-        // Logout functionality
-        logoutButton.addEventListener('click', async function() {
+        // Handle logout
+        function handleLogout() {
             if (confirm('Apakah Anda yakin ingin logout?')) {
-                try {
-                    const response = await fetch('/api/auth/logout', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${currentSessionId}`
-                        },
-                        body: JSON.stringify({ sessionId: currentSessionId })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        // Clear localStorage
-                        localStorage.removeItem('sessionId');
-                        localStorage.removeItem('username');
-                        localStorage.removeItem('isDeveloper');
-                        currentSessionId = null;
-                        
-                        window.location.href = '/';
-                    } else {
-                        alert('Gagal logout: ' + data.error);
-                    }
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    alert('Terjadi kesalahan saat logout');
-                }
-            }
-        });
-
-        async function checkAuthStatus() {
-            try {
-                const response = await fetch('/api/auth/status', {
-                    headers: {
-                        'Authorization': `Bearer ${currentSessionId}`
-                    }
-                });
-                const data = await response.json();
-                
-                if (!data.isAuthenticated) {
-                    // Clear invalid session
-                    localStorage.removeItem('sessionId');
-                    localStorage.removeItem('username');
-                    localStorage.removeItem('isDeveloper');
-                    window.location.href = '/';
-                    return;
-                }
-
-                // Display user info from localStorage or API
-                const savedUsername = localStorage.getItem('username') || data.username;
-                const savedIsDeveloper = localStorage.getItem('isDeveloper') === 'true' || data.isDeveloper;
-                
-                usernameDisplay.textContent = savedUsername;
-                userBadge.textContent = savedIsDeveloper ? 'Developer' : 'User';
-                
-                if (savedIsDeveloper) {
-                    userBadge.classList.add('developer');
-                }
-
-                // Load chat history
-                loadChatHistory();
-            } catch (error) {
-                console.error('Auth check error:', error);
-                window.location.href = '/';
+                alert('Anda telah logout dari Elaina Assistant');
+                // In a real app, you would redirect to login page or clear session
             }
         }
 
-        async function loadChatHistory() {
-            try {
-                const response = await fetch('/api/chat/history', {
-                    headers: {
-                        'Authorization': `Bearer ${currentSessionId}`
-                    }
-                });
-                const data = await response.json();
-                
-                const welcomeMessage = chatMessages.querySelector('.welcome-message');
-                if (welcomeMessage && data.messages.length > 0) {
-                    welcomeMessage.remove();
-                }
-                
-                // Add messages to chat
-                data.messages.forEach(message => {
-                    addMessageToChat(message.text, message.role === 'user');
-                });
-                
-                scrollToBottom();
-            } catch (error) {
-                console.error('Error loading chat history:', error);
-            }
-        }
-
-        // Auto-resize textarea
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-        });
-
-        // Send message on Enter (without Shift)
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // Send message on button click
-        sendButton.addEventListener('click', sendMessage);
-
-        async function sendMessage() {
+        // Send message function
+        function sendMessage() {
             const message = messageInput.value.trim();
             if (!message) return;
 
-            // Clear input and reset height
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-            
             // Add user message to chat
-            addMessageToChat(message, true);
-            
+            addMessage(message, 'user');
+            messageInput.value = '';
+            autoResizeTextarea();
+
             // Show typing indicator
-            typingIndicator.classList.add('active');
-            scrollToBottom();
+            showTypingIndicator();
 
-            // Disable input while waiting for response
-            messageInput.disabled = true;
-            sendButton.disabled = true;
-
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentSessionId}`
-                    },
-                    body: JSON.stringify({ 
-                        message,
-                        sessionId: currentSessionId 
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.reply) {
-                    addMessageToChat(data.reply, false);
-                } else if (data.error) {
-                    addMessageToChat('❌ Maaf, terjadi kesalahan: ' + data.error, false);
-                }
-            } catch (error) {
-                addMessageToChat('❌ Maaf, terjadi kesalahan koneksi. Silakan coba lagi.', false);
-                console.error('Chat error:', error);
-            } finally {
-                typingIndicator.classList.remove('active');
-                messageInput.disabled = false;
-                sendButton.disabled = false;
-                messageInput.focus();
-                scrollToBottom();
-            }
+            // Simulate AI response after a delay
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = generateAIResponse(message);
+                addMessage(response, 'ai');
+            }, 1500);
         }
 
-        function addMessageToChat(message, isUser) {
-            // Remove welcome message if it's the first user message
-            const welcomeMessage = chatMessages.querySelector('.welcome-message');
-            if (welcomeMessage && isUser) {
-                welcomeMessage.remove();
-            }
-            
+        // Add message to chat
+        function addMessage(text, sender) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            messageDiv.className = `message ${sender}-message`;
             
-            const messageBubble = document.createElement('div');
-            messageBubble.className = 'message-bubble';
-            messageBubble.textContent = message;
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            
+            // Check if message contains code
+            if (text.includes('```')) {
+                const parts = text.split('```');
+                let content = '';
+                
+                for (let i = 0; i < parts.length; i++) {
+                    if (i % 2 === 0) {
+                        // Regular text
+                        content += parts[i];
+                    } else {
+                        // Code block
+                        const codeLines = parts[i].split('\n');
+                        const language = codeLines[0] || 'code';
+                        const codeContent = codeLines.slice(1).join('\n');
+                        
+                        content += `
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-language">${language}</span>
+                                    <button class="copy-button" onclick="copyCode(this)">📋 Copy</button>
+                                </div>
+                                <div class="code-content">${escapeHtml(codeContent)}</div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                bubbleDiv.innerHTML = content;
+            } else {
+                bubbleDiv.textContent = text;
+            }
             
             const timeDiv = document.createElement('div');
             timeDiv.className = 'message-time';
-            timeDiv.textContent = new Date().toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
+            timeDiv.textContent = getCurrentTime();
             
-            messageDiv.appendChild(messageBubble);
+            messageDiv.appendChild(bubbleDiv);
             messageDiv.appendChild(timeDiv);
-            chatMessages.appendChild(messageDiv);
             
+            // Remove welcome message if it exists
+            const welcomeMessage = chatMessages.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+            
+            chatMessages.appendChild(messageDiv);
             scrollToBottom();
         }
 
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Copy code to clipboard
+        function copyCode(button) {
+            const codeContent = button.closest('.code-block').querySelector('.code-content').textContent;
+            navigator.clipboard.writeText(codeContent).then(() => {
+                button.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    button.textContent = '📋 Copy';
+                }, 2000);
+            });
+        }
+
+        // Show typing indicator
+        function showTypingIndicator() {
+            typingIndicator.classList.add('active');
+            scrollToBottom();
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            typingIndicator.classList.remove('active');
+        }
+
+        // Scroll to bottom of chat
         function scrollToBottom() {
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 100);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Music player functionality
-        const audio = new Audio();
-        let isPlaying = false;
-
-        // Playlist
-        const tracks = [
-            {
-                name: "Relaxing Vibes",
-                artist: "Elaina AI",
-                src: "https://files.catbox.moe/ve0lvk.mp3"
-            }
-        ];
-
-        let currentTrackIndex = 0;
-
-        function loadTrack(index) {
-            const track = tracks[index];
-            currentTrack.textContent = track.name;
-            currentArtist.textContent = track.artist;
-            audio.src = track.src;
+        // Get current time in HH:MM format
+        function getCurrentTime() {
+            const now = new Date();
+            return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
         }
 
-        function togglePlay() {
-            if (isPlaying) {
-                pauseTrack();
+        // Auto-resize textarea
+        function autoResizeTextarea() {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
+        }
+
+        // Toggle panel (music player or contact panel)
+        function togglePanel(panel, forceState) {
+            const isActive = panel.classList.contains('active');
+            const shouldActivate = forceState !== undefined ? forceState : !isActive;
+            
+            if (shouldActivate) {
+                panel.classList.add('active');
             } else {
-                playTrack();
+                panel.classList.remove('active');
             }
         }
 
-        function playTrack() {
-            isPlaying = true;
-            playIcon.innerHTML = `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="4" width="4" height="16" stroke="currentColor" stroke-width="2"/>
-                    <rect x="14" y="4" width="4" height="16" stroke="currentColor" stroke-width="2"/>
-                </svg>
-            `;
-            audio.play().catch(console.error);
-        }
-
-        function pauseTrack() {
-            isPlaying = false;
-            playIcon.innerHTML = `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 3L19 12L5 21V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            `;
-            audio.pause();
-        }
-
-        playButton.addEventListener('click', togglePlay);
-
-        // Previous track
-        prevButton.addEventListener('click', function() {
-            currentTrackIndex--;
-            if (currentTrackIndex < 0) {
-                currentTrackIndex = tracks.length - 1;
-            }
-            loadTrack(currentTrackIndex);
+        // Toggle play/pause
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
             if (isPlaying) {
-                playTrack();
+                // Change icon to pause
+                playIcon.innerHTML = '<path d="M6 4H10V20H6V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 4H18V20H14V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+                
+                // Start progress simulation
+                startProgress();
+            } else {
+                // Change icon to play
+                playIcon.innerHTML = '<path d="M5 3L19 12L5 21V3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+                
+                // Stop progress simulation
+                stopProgress();
             }
-        });
+        }
 
-        // Next track
-        nextButton.addEventListener('click', function() {
-            currentTrackIndex++;
-            if (currentTrackIndex >= tracks.length) {
-                currentTrackIndex = 0;
-            }
-            loadTrack(currentTrackIndex);
-            if (isPlaying) {
-                playTrack();
-            }
-        });
+        // Start progress simulation
+        function startProgress() {
+            clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                if (currentTime < duration) {
+                    currentTime++;
+                    updateProgress();
+                } else {
+                    // Song ended
+                    isPlaying = false;
+                    togglePlay();
+                    currentTime = 0;
+                    updateProgress();
+                }
+            }, 1000);
+        }
 
-        // Update progress bar
-        audio.addEventListener('timeupdate', function() {
-            const { duration, currentTime } = audio;
+        // Stop progress simulation
+        function stopProgress() {
+            clearInterval(progressInterval);
+        }
+
+        // Update progress bar and time
+        function updateProgress() {
             const progressPercent = (currentTime / duration) * 100;
             progressBar.style.width = `${progressPercent}%`;
+            
+            // Update time display
             currentTimeEl.textContent = formatTime(currentTime);
-            
-            if (duration) {
-                durationEl.textContent = formatTime(duration);
-            }
-        });
-
-        // Set progress on click
-        progressContainer.addEventListener('click', function(e) {
-            const width = this.clientWidth;
-            const clickX = e.offsetX;
-            const duration = audio.duration;
-            
-            audio.currentTime = (clickX / width) * duration;
-        });
-
-        // Volume control
-        volumeSlider.addEventListener('input', function() {
-            audio.volume = this.value / 100;
-        });
-
-        // Format time
-        function formatTime(seconds) {
-            const min = Math.floor(seconds / 60);
-            const sec = Math.floor(seconds % 60);
-            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+            durationEl.textContent = formatTime(duration);
         }
 
-        // Initialize music player
-        loadTrack(currentTrackIndex);
+        // Set progress based on click position
+        function setProgress(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const percent = clickX / width;
+            
+            currentTime = percent * duration;
+            updateProgress();
+        }
 
-        // Auto-focus on message input
-        messageInput.focus();
+        // Set volume
+        function setVolume() {
+            const volume = volumeSlider.value;
+            // In a real app, you would set the audio volume here
+        }
 
-        // Prevent context menu
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
+        // Format time in MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
 
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            scrollToBottom();
-        });
+        // Load user info
+        function loadUserInfo() {
+            // In a real app, you would fetch this from your backend
+            const username = "Pengguna Elaina";
+            const badge = "Premium";
+            
+            usernameDisplay.textContent = username;
+            userBadge.textContent = badge;
+            
+            // Add special class for developer badge
+            if (badge === "Developer") {
+                userBadge.classList.add('developer');
+            }
+        }
+
+        // Generate AI response (simulated)
+        function generateAIResponse(userMessage) {
+            const responses = [
+                "Saya memahami pertanyaan Anda. Berdasarkan pengetahuan saya, berikut adalah penjelasannya...",
+                "Itu pertanyaan yang bagus! Mari kita bahas lebih detail...",
+                "Saya dapat membantu Anda dengan itu. Berikut adalah informasi yang Anda butuhkan...",
+                "Terima kasih atas pertanyaannya. Berdasarkan data yang saya miliki...",
+                "Saya mengerti apa yang Anda tanyakan. Ini adalah penjelasan yang dapat saya berikan...",
+                "Pertanyaan yang menarik! Mari kita eksplorasi jawabannya bersama-sama...",
+                "Saya senang Anda bertanya tentang ini. Berikut adalah pandangan saya...",
+                "Berdasarkan analisis saya, inilah yang dapat saya sampaikan...",
+                "Itu topik yang penting. Mari kita lihat penjelasannya...",
+                "Saya punya informasi tentang itu. Berikut adalah penjelasan lengkapnya..."
+            ];
+            
+            // Simple keyword-based responses
+            if (userMessage.toLowerCase().includes('halo') || userMessage.toLowerCase().includes('hai')) {
+                return "Halo! Senang bertemu dengan Anda. Ada yang bisa saya bantu hari ini?";
+            } else if (userMessage.toLowerCase().includes('terima kasih')) {
+                return "Sama-sama! Senang bisa membantu. Jika ada pertanyaan lain, jangan ragu untuk bertanya!";
+            } else if (userMessage.toLowerCase().includes('nama')) {
+                return "Nama saya Elaina, asisten AI yang siap membantu Anda dengan berbagai pertanyaan dan tugas!";
+            } else if (userMessage.toLowerCase().includes('buat kode') || userMessage.toLowerCase().includes('program')) {
+                return `Tentu, saya bisa membantu Anda dengan pemrograman. Berikut adalah contoh kode sederhana:
+
+\`\`\`javascript
+// Program Hallo World dalam JavaScript
+function sapa(nama) {
+    return "Halo, " + nama + "! Selamat belajar pemrograman.";
+}
+
+// Contoh penggunaan
+console.log(sapa("Elaina"));
+\`\`\`
+
+Kode di atas adalah fungsi sederhana untuk menyapa pengguna. Anda bisa menyesuaikannya sesuai kebutuhan!`;
+            }
+            
+            // Default random response
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
