@@ -4,28 +4,12 @@
     {
       "src": "server.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/public/$1"
+      "dest": "server.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "MONGODB_URI": "@mongodb_uri",
-    "GEMINI_API_KEYS": "@gemini_api_keys",
-    "DEVELOPER_USERNAME": "@developer_username",
-    "DEVELOPER_PASSWORD": "@developer_password",
-    "JWT_SECRET": "@jwt_secret"
-  }
+  ]
 }
