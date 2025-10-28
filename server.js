@@ -32,24 +32,39 @@ const sessions = new Map();
 
 // MongoDB Connection
 let db;
+let dbClient;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 async function connectDB() {
   try {
     if (!MONGODB_URI) {
       console.log('⚠️ MONGODB_URI not set');
+      console.log('Available environment variables:', Object.keys(process.env));
       return;
     }
 
-    const client = new MongoClient(MONGODB_URI);
+    console.log('🔗 Attempting to connect to MongoDB...');
+    console.log('MongoDB URI:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')); // Hide credentials
+    
+    const client = new MongoClient(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
+    
     await client.connect();
+    dbClient = client;
     db = client.db('elaina_ai');
-    console.log('✅ Connected to MongoDB');
+    
+    // Test connection
+    await db.command({ ping: 1 });
+    console.log('✅ Connected to MongoDB successfully');
     
     await db.collection('users').createIndex({ username: 1 }, { unique: true });
     await initializeDeveloperAccount();
   } catch (error) {
     console.log('❌ MongoDB connection failed:', error.message);
+    console.log('Error details:', error);
   }
 }
 
@@ -58,7 +73,10 @@ async function initializeDeveloperAccount() {
     const developerUsername = process.env.DEVELOPER_USERNAME;
     const developerPassword = process.env.DEVELOPER_PASSWORD;
     
-    if (!developerUsername || !developerPassword) return;
+    if (!developerUsername || !developerPassword) {
+      console.log('⚠️ Developer credentials not set');
+      return;
+    }
 
     const existing = await db.collection('users').findOne({ username: developerUsername });
     if (!existing) {
@@ -70,6 +88,8 @@ async function initializeDeveloperAccount() {
         createdAt: new Date()
       });
       console.log('✅ Developer account created');
+    } else {
+      console.log('✅ Developer account already exists');
     }
   } catch (error) {
     console.log('Developer account init error:', error.message);
@@ -196,7 +216,7 @@ app.get('/api/auth/status', (req, res) => {
   });
 });
 
-// Register - IMPROVED
+// Register - IMPROVED dengan fallback tanpa database
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -213,8 +233,34 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Password minimal 6 karakter' });
     }
     
+    // Jika database tidak tersedia, gunakan session-based auth
     if (!db) {
-      return res.status(500).json({ error: 'Database tidak terhubung' });
+      console.log('⚠️ Using session-based auth (no database)');
+      
+      // Cek jika username sudah ada di sessions
+      for (const session of sessions.values()) {
+        if (session.username === username) {
+          return res.status(400).json({ error: 'Username sudah digunakan' });
+        }
+      }
+      
+      const sessionId = generateSessionId();
+      const sessionData = {
+        userId: generateSessionId(),
+        username,
+        isDeveloper: false,
+        expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      };
+      
+      sessions.set(sessionId, sessionData);
+      
+      return res.json({ 
+        success: true, 
+        message: 'Registrasi berhasil! (Session-based)',
+        sessionId,
+        username,
+        isDeveloper: false
+      });
     }
     
     const existingUser = await db.collection('users').findOne({ username });
@@ -254,7 +300,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// Login - IMPROVED
+// Login - IMPROVED dengan fallback tanpa database
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -263,35 +309,36 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Username dan password harus diisi' });
     }
     
-    if (!db) {
-      return res.status(500).json({ error: 'Database tidak terhubung' });
-    }
-    
-    // Check developer credentials
+    // Check developer credentials (tanpa database)
     const developerUsername = process.env.DEVELOPER_USERNAME;
     const developerPassword = process.env.DEVELOPER_PASSWORD;
     
     if (username === developerUsername && password === developerPassword) {
-      let developer = await db.collection('users').findOne({ username: developerUsername });
+      console.log('🔑 Developer login attempt');
       
-      if (!developer) {
-        const hashedPassword = await bcrypt.hash(developerPassword, 12);
-        const result = await db.collection('users').insertOne({
-          username: developerUsername,
-          password: hashedPassword,
-          isDeveloper: true,
-          createdAt: new Date()
-        });
-        developer = {
-          _id: result.insertedId,
-          username: developerUsername,
-          isDeveloper: true
-        };
+      let developer;
+      if (db) {
+        developer = await db.collection('users').findOne({ username: developerUsername });
+        
+        if (!developer) {
+          const hashedPassword = await bcrypt.hash(developerPassword, 12);
+          const result = await db.collection('users').insertOne({
+            username: developerUsername,
+            password: hashedPassword,
+            isDeveloper: true,
+            createdAt: new Date()
+          });
+          developer = {
+            _id: result.insertedId,
+            username: developerUsername,
+            isDeveloper: true
+          };
+        }
       }
       
       const sessionId = generateSessionId();
       const sessionData = {
-        userId: developer._id.toString(),
+        userId: developer?._id?.toString() || generateSessionId(),
         username: developerUsername,
         isDeveloper: true,
         expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
@@ -308,7 +355,38 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
     
-    // Regular user login
+    // Jika database tidak tersedia, gunakan session-based auth
+    if (!db) {
+      console.log('⚠️ Using session-based auth (no database)');
+      
+      // Cari user di sessions
+      for (const [sessionId, session] of sessions.entries()) {
+        if (session.username === username) {
+          // Untuk session-based, kita terima password apa saja
+          // (ini hanya untuk fallback, tidak aman untuk production)
+          const sessionData = {
+            userId: session.userId,
+            username: session.username,
+            isDeveloper: session.isDeveloper,
+            expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+          };
+          
+          sessions.set(sessionId, sessionData);
+          
+          return res.json({ 
+            success: true, 
+            message: 'Login berhasil! (Session-based)',
+            sessionId,
+            username: session.username,
+            isDeveloper: session.isDeveloper || false
+          });
+        }
+      }
+      
+      return res.status(400).json({ error: 'Username tidak ditemukan' });
+    }
+    
+    // Regular user login dengan database
     const user = await db.collection('users').findOne({ username });
     if (!user) {
       return res.status(400).json({ error: 'Username tidak ditemukan' });
@@ -437,13 +515,23 @@ app.get('/api/chat/history', requireAuth, async (req, res) => {
   }
 });
 
-// Health check
+// Health check - IMPROVED dengan info database
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     database: db ? 'Connected' : 'Disconnected',
-    sessions: sessions.size
+    sessions: sessions.size,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Database status endpoint
+app.get('/api/db-status', (req, res) => {
+  res.json({
+    database: db ? 'Connected' : 'Disconnected',
+    mongodbUri: process.env.MONGODB_URI ? 'Set' : 'Not Set',
+    activeSessions: sessions.size
   });
 });
 
@@ -475,6 +563,8 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log(`🚀 Elaina AI Server running on port ${PORT}`);
     console.log(`📊 Active sessions: ${sessions.size}`);
+    console.log(`🗄️ Database: ${db ? 'Connected' : 'Disconnected'}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 }
 
