@@ -164,11 +164,11 @@ app.get('/', (req, res) => {
   if (req.session.userId) {
     res.sendFile(path.join(__dirname, 'index.html'));
   } else {
-    res.redirect('/login.html');
+    res.redirect('/main/login.html');
   }
 });
 
-app.get('/login.html', (req, res) => {
+app.get('/main/login.html', (req, res) => {
   if (req.session.userId) {
     res.redirect('/');
   } else {
