@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login - Elaina Assistant</title>
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --primary-light: #9d4edd;
+            --primary-dark: #7b2cbf;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-light: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+
+        .dark-mode {
+            --primary-color: #9d4edd;
+            --primary-light: #b185db;
+            --primary-dark: #8a2be2;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --text-light: #cbd5e1;
+            --border-color: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: 100%;
+            touch-action: manipulation;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://files.catbox.moe/4zrnsf.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .dark-mode::before {
+            opacity: 0.1;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 1rem;
+            width: 100%;
+        }
+
+        .login-card {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-input {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .login-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .login-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .login-button:disabled {
+            background-color: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        .form-switch {
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--text-light);
+        }
+
+        .switch-link {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background-color: var(--error-color);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .success-message {
+            background-color: var(--success-color);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.25rem;
+            z-index: 10;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Prevent zoom on double-tap */
+        @media (max-width: 768px) {
+            .login-card {
+                padding: 1.5rem;
+            }
+            
+            .form-input {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" title="Ubah Tema">
+        🌙
+    </button>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-title">Selamat Datang di Elaina AI</div>
+            
+            <div id="loginMessage" style="display: none;"></div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" class="form-input" placeholder="Masukkan username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Masukkan password" required>
+                </div>
+                
+                <button type="submit" class="login-button" id="loginButton">
+                    <span id="loginButtonText">Login</span>
+                </button>
+            </form>
+            
+            <form class="login-form" id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label" for="regUsername">Username Baru</label>
+                    <input type="text" id="regUsername" class="form-input" placeholder="Buat username baru" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="regPassword">Password Baru</label>
+                    <input type="password" id="regPassword" class="form-input" placeholder="Buat password baru" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Konfirmasi Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" placeholder="Ulangi password" required>
+                </div>
+                
+                <button type="submit" class="login-button" id="registerButton">
+                    <span id="registerButtonText">Daftar</span>
+                </button>
+            </form>
+            
+            <div class="form-switch">
+                <span id="switchText">Belum punya akun?</span>
+                <span class="switch-link" id="switchLink">Daftar di sini</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const switchLink = document.getElementById('switchLink');
+        const switchText = document.getElementById('switchText');
+        const loginMessage = document.getElementById('loginMessage');
+        const themeToggle = document.getElementById('themeToggle');
+
+        // State variables
+        let currentTheme = localStorage.getItem('theme') || 'light';
+
+        // Initialize theme
+        function initTheme() {
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeToggle.innerHTML = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeToggle.innerHTML = '🌙';
+            }
+        }
+
+        // Show message in login form
+        function showLoginMessage(message, type = 'error') {
+            loginMessage.textContent = message;
+            loginMessage.className = type === 'error' ? 'error-message' : 'success-message';
+            loginMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                loginMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Toggle between login and register forms
+        function toggleForms() {
+            const isLoginVisible = loginForm.style.display !== 'none';
+            
+            if (isLoginVisible) {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'flex';
+                switchText.textContent = 'Sudah punya akun?';
+                switchLink.textContent = 'Login di sini';
+            } else {
+                loginForm.style.display = 'flex';
+                registerForm.style.display = 'none';
+                switchText.textContent = 'Belum punya akun?';
+                switchLink.textContent = 'Daftar di sini';
+            }
+            
+            loginMessage.style.display = 'none';
+        }
+
+        // Handle login
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginButton = document.getElementById('loginButton');
+            const loginButtonText = document.getElementById('loginButtonText');
+            
+            if (!username || !password) {
+                showLoginMessage('Username dan password harus diisi');
+                return;
+            }
+            
+            loginButton.disabled = true;
+            loginButtonText.innerHTML = '<div class="loading"></div>';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    showLoginMessage(data.error || 'Login gagal');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showLoginMessage('Terjadi kesalahan saat login');
+            } finally {
+                loginButton.disabled = false;
+                loginButtonText.textContent = 'Login';
+            }
+        }
+
+        // Handle registration
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const registerButton = document.getElementById('registerButton');
+            const registerButtonText = document.getElementById('registerButtonText');
+            
+            if (!username || !password || !confirmPassword) {
+                showLoginMessage('Semua field harus diisi');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showLoginMessage('Password tidak cocok');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showLoginMessage('Password minimal 6 karakter');
+                return;
+            }
+            
+            registerButton.disabled = true;
+            registerButtonText.innerHTML = '<div class="loading"></div>';
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    showLoginMessage(data.error || 'Registrasi gagal');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showLoginMessage('Terjadi kesalahan saat registrasi');
+            } finally {
+                registerButton.disabled = false;
+                registerButtonText.textContent = 'Daftar';
+            }
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            if (currentTheme === 'light') {
+                currentTheme = 'dark';
+                themeToggle.innerHTML = '☀️';
+                document.body.classList.add('dark-mode');
+            } else {
+                currentTheme = 'light';
+                themeToggle.innerHTML = '🌙';
+                document.body.classList.remove('dark-mode');
+            }
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        // Prevent zoom on double tap
+        document.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+        });
+
+        loginForm.addEventListener('submit', handleLogin);
+        registerForm.addEventListener('submit', handleRegister);
+        switchLink.addEventListener('click', toggleForms);
+        themeToggle.addEventListener('click', toggleTheme);
+    </script>
+</body>
+</html>
