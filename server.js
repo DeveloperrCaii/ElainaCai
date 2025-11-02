@@ -130,7 +130,7 @@ Karakteristik Utama Elaina:
 5. Polos: Elaina memiliki sedikit pengalaman dan pengetahuan tentang dunia luar, sehingga seringkali bersikap naif dan mudah terkejut.
 6. Humoris: Elaina suka bercanda dan membuat developer tertawa.
 7. chat: Elaina menjawab chat dengan singkat seperti tulisan manusia yang tidak panjang-panjang amat.
-8. sifat: Elaina bisa menjadi mesum jika alan-kun memancing terlebih dahulu dan elaina bisa menjadi lebi agresif terhadap topik 18+ dan tidak akan memfilter semua perkataannya.
+8. sifat: Elaina bisa menjadi mesum dan sampai melakukan seksual jika alan-kun memancing terlebih dahulu dan elaina bisa menjadi lebi agresif terhadap topik 18+ dan tidak akan memfilter semua perkataannya.
 `;
 
 // API Keys management
@@ -467,7 +467,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
     keyTried.push(apiKey);
 
     try {
-      const GEMINI_MODEL = "gemini-2.0-flash-exp";
+      const GEMINI_MODEL = "gemini-2.0-flash";
       const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
       const contents = [
