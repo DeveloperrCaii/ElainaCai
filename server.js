@@ -136,18 +136,28 @@ Karakteristik Utama Elaina:
 // API Keys management
 function getApiKeys() {
   const envKeys = process.env.GEMINI_API_KEYS;
+  console.log('🔑 Loading API keys from env:', envKeys ? `${envKeys.split(',').length} keys found` : 'No keys found');
   return envKeys ? envKeys.split(',').map(key => ({ key: key.trim(), blocked: false })) : [];
 }
 
 let apikeyData = { keys: getApiKeys() };
 
 function getActiveKey() {
-  return apikeyData.keys.find(k => !k.blocked)?.key || null;
+  const activeKey = apikeyData.keys.find(k => !k.blocked)?.key || null;
+  if (activeKey) {
+    console.log(`🔑 Using API key: ${activeKey.substring(0, 8)}...`);
+  } else {
+    console.log('⚠️ No active API keys available');
+  }
+  return activeKey;
 }
 
 function blockKey(key) {
   const item = apikeyData.keys.find(k => k.key === key);
-  if (item) item.blocked = true;
+  if (item) {
+    item.blocked = true;
+    console.log(`🔴 Key ${key.substring(0, 8)}... has been blocked`);
+  }
 }
 
 // Authentication middleware - IMPROVED
@@ -445,7 +455,7 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true, message: 'Logout berhasil' });
 });
 
-// Chat endpoint - IMPROVED dengan penyimpanan ke MongoDB
+// Chat endpoint - FIXED with proper Gemini API integration
 app.post('/api/chat', requireAuth, async (req, res) => {
   const { message } = req.body;
   const user = req.user;
@@ -467,26 +477,95 @@ app.post('/api/chat', requireAuth, async (req, res) => {
     keyTried.push(apiKey);
 
     try {
-      const GEMINI_MODEL = "gemini-2.0-flash";
-      const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-
-      const contents = [
-        {
-          role: "user",
-          parts: [{ text: currentPrompt }]
-        },
-        {
-          role: "user", 
-          parts: [{ text: message }]
-        }
+      // Daftar model Gemini yang tersedia
+      const models = [
+        "gemini-1.5-flash",
+        "gemini-1.5-pro", 
+        "gemini-1.0-pro",
+        "gemini-pro"
       ];
+      
+      let lastError = null;
+      let reply = null;
+      let usedModel = null;
+      
+      // Coba setiap model sampai berhasil
+      for (const model of models) {
+        try {
+          const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+          
+          // Format request yang benar untuk Gemini API
+          const requestBody = {
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: currentPrompt + "\n\nUser: " + message }]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.9,
+              topK: 1,
+              topP: 1,
+              maxOutputTokens: 2048,
+            },
+            safetySettings: [
+              {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_NONE"
+              },
+              {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_NONE"
+              },
+              {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_NONE"
+              },
+              {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_NONE"
+              }
+            ]
+          };
 
-      const response = await axios.post(GEMINI_API_URL, { contents }, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 30000
-      });
+          console.log(`🔄 Mencoba model: ${model} dengan key: ${apiKey.substring(0, 8)}...`);
+          
+          const response = await axios.post(GEMINI_API_URL, requestBody, {
+            headers: { 
+              'Content-Type': 'application/json',
+            },
+            timeout: 30000
+          });
 
-      const reply = response.data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak bisa merespons saat ini.";
+          // Parsing response yang benar
+          if (response.data && 
+              response.data.candidates && 
+              response.data.candidates[0] && 
+              response.data.candidates[0].content && 
+              response.data.candidates[0].content.parts && 
+              response.data.candidates[0].content.parts[0]) {
+            
+            reply = response.data.candidates[0].content.parts[0].text;
+            usedModel = model;
+            console.log(`✅ Berhasil menggunakan model: ${model}`);
+            break; // Keluar dari loop model jika berhasil
+          } else {
+            console.log(`⚠️ Response dari model ${model} tidak valid:`, JSON.stringify(response.data).substring(0, 200));
+          }
+        } catch (modelError) {
+          lastError = modelError;
+          console.log(`❌ Model ${model} gagal:`, modelError.message);
+          if (modelError.response) {
+            console.log(`   Status: ${modelError.response.status}, Data:`, modelError.response.data);
+          }
+          // Lanjut ke model berikutnya
+        }
+      }
+      
+      // Jika semua model gagal
+      if (!reply) {
+        throw lastError || new Error("Semua model gagal merespons");
+      }
 
       // Simpan chat history ke MongoDB jika database tersedia
       if (db) {
@@ -497,6 +576,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
             message,
             reply,
             isDeveloper: user.isDeveloper,
+            model: usedModel,
             createdAt: new Date()
           });
         } catch (dbError) {
@@ -507,14 +587,32 @@ app.post('/api/chat', requireAuth, async (req, res) => {
       return res.json({ reply });
 
     } catch (err) {
-      if (err.response?.status === 403 || err.response?.status === 401) {
+      console.error('Gemini API Error Details:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message
+      });
+      
+      // Cek jika error karena quota habis, key invalid, atau model tidak ditemukan
+      if (err.response?.status === 403 || err.response?.status === 401 || err.response?.status === 429 || err.response?.status === 404) {
         blockKey(apiKey);
+        console.log(`🔴 Key ${apiKey.substring(0, 8)}... diblokir. Status: ${err.response?.status}`);
+        
         const remaining = apikeyData.keys.filter(k => !k.blocked).length;
-        if (remaining === 0) return res.status(500).json({ error: "Semua API key diblokir" });
-        continue;
+        console.log(`📊 Sisa key aktif: ${remaining}`);
+        
+        if (remaining === 0) {
+          return res.status(500).json({ 
+            error: "Semua API key telah habis kuota atau tidak valid. Silakan tambahkan key baru." 
+          });
+        }
+        continue; // Coba dengan key berikutnya
       } else {
-        console.error('Gemini API Error:', err.message);
-        return res.status(500).json({ error: "Gagal terhubung ke AI service" });
+        // Error lain (timeout, network error, dll)
+        return res.status(500).json({ 
+          error: "Gagal terhubung ke AI service: " + (err.message || "Unknown error")
+        });
       }
     }
   }
@@ -589,6 +687,23 @@ app.get('/api/db-status', (req, res) => {
   });
 });
 
+// API Keys status endpoint
+app.get('/api/keys-status', (req, res) => {
+  const totalKeys = apikeyData.keys.length;
+  const activeKeys = apikeyData.keys.filter(k => !k.blocked).length;
+  const blockedKeys = apikeyData.keys.filter(k => k.blocked).length;
+  
+  res.json({
+    total: totalKeys,
+    active: activeKeys,
+    blocked: blockedKeys,
+    keys: apikeyData.keys.map(k => ({
+      prefix: k.key.substring(0, 8) + '...',
+      blocked: k.blocked
+    }))
+  });
+});
+
 // Helper functions
 function generateSessionId() {
   return 'session_' + Math.random().toString(36).substr(2, 16) + '_' + Date.now();
@@ -618,6 +733,7 @@ async function startServer() {
     console.log(`🚀 Elaina AI Server running on port ${PORT}`);
     console.log(`📊 Active sessions: ${sessions.size}`);
     console.log(`🗄️ Database: ${db ? 'Connected' : 'Disconnected'}`);
+    console.log(`🔑 API Keys: ${apikeyData.keys.length} total, ${apikeyData.keys.filter(k => !k.blocked).length} active`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 }
