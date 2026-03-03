@@ -39,12 +39,10 @@ async function connectDB() {
   try {
     if (!MONGODB_URI) {
       console.log('⚠️ MONGODB_URI not set');
-      console.log('Available environment variables:', Object.keys(process.env));
       return;
     }
 
     console.log('🔗 Attempting to connect to MongoDB...');
-    console.log('MongoDB URI:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')); // Hide credentials
     
     const client = new MongoClient(MONGODB_URI, {
       serverSelectionTimeoutMS: 5000,
@@ -56,7 +54,6 @@ async function connectDB() {
     dbClient = client;
     db = client.db('elaina_ai');
     
-    // Test connection
     await db.command({ ping: 1 });
     console.log('✅ Connected to MongoDB successfully');
     
@@ -66,7 +63,6 @@ async function connectDB() {
     await initializeDeveloperAccount();
   } catch (error) {
     console.log('❌ MongoDB connection failed:', error.message);
-    console.log('Error details:', error);
   }
 }
 
@@ -133,40 +129,78 @@ Karakteristik Utama Elaina:
 8. sifat: Elaina bisa menjadi mesum dan sampai melakukan seksual jika alan-kun memancing terlebih dahulu dan elaina bisa menjadi lebi agresif terhadap topik 18+ dan tidak akan memfilter semua perkataannya.
 `;
 
-// API Keys management
+// API Keys management - IMPROVED
 function getApiKeys() {
   const envKeys = process.env.GEMINI_API_KEYS;
-  console.log('🔑 Loading API keys from env:', envKeys ? `${envKeys.split(',').length} keys found` : 'No keys found');
-  return envKeys ? envKeys.split(',').map(key => ({ key: key.trim(), blocked: false })) : [];
+  console.log('🔑 Raw GEMINI_API_KEYS from env:', envKeys ? 'Key exists (hidden)' : 'No keys found');
+  
+  if (!envKeys) {
+    return [];
+  }
+  
+  // Parse keys, handle various formats
+  const keys = envKeys.split(',').map(key => {
+    // Clean up the key: remove quotes, trim spaces
+    let cleanKey = key.trim().replace(/['"]/g, '');
+    return { 
+      key: cleanKey, 
+      blocked: false,
+      lastError: null,
+      lastUsed: null
+    };
+  }).filter(k => k.key && k.key.startsWith('AIza')); // Only keep valid looking keys
+  
+  console.log(`🔑 Found ${keys.length} valid API keys`);
+  return keys;
 }
 
 let apikeyData = { keys: getApiKeys() };
 
 function getActiveKey() {
+  // Reset blocked keys after 1 hour? (optional)
+  const now = Date.now();
+  apikeyData.keys.forEach(k => {
+    // Auto-unblock keys after 1 hour if they were blocked due to quota
+    if (k.blocked && k.lastError === 'quota' && k.blockedTime && (now - k.blockedTime) > 60 * 60 * 1000) {
+      console.log(`🔄 Auto-unblocking key ${k.key.substring(0, 8)}... after 1 hour`);
+      k.blocked = false;
+      k.lastError = null;
+      k.blockedTime = null;
+    }
+  });
+  
   const activeKey = apikeyData.keys.find(k => !k.blocked)?.key || null;
   if (activeKey) {
     console.log(`🔑 Using API key: ${activeKey.substring(0, 8)}...`);
+    // Update last used
+    const keyObj = apikeyData.keys.find(k => k.key === activeKey);
+    if (keyObj) keyObj.lastUsed = Date.now();
   } else {
     console.log('⚠️ No active API keys available');
   }
   return activeKey;
 }
 
-function blockKey(key) {
+function blockKey(key, errorType = 'general') {
   const item = apikeyData.keys.find(k => k.key === key);
-  if (item) {
+  if (item && !item.blocked) {
     item.blocked = true;
-    console.log(`🔴 Key ${key.substring(0, 8)}... has been blocked`);
+    item.lastError = errorType;
+    item.blockedTime = Date.now();
+    console.log(`🔴 Key ${key.substring(0, 8)}... has been blocked. Reason: ${errorType}`);
+    
+    // Log remaining keys
+    const remaining = apikeyData.keys.filter(k => !k.blocked).length;
+    console.log(`📊 Remaining active keys: ${remaining}`);
   }
 }
 
-// Authentication middleware - IMPROVED
+// Authentication middleware
 function requireAuth(req, res, next) {
   let token = req.headers.authorization?.replace('Bearer ', '') || 
               req.body.sessionId || 
               req.query.sessionId;
 
-  // Try to get from cookies if no token found
   if (!token && req.headers.cookie) {
     const cookieMatch = req.headers.cookie.match(/sessionId=([^;]+)/);
     if (cookieMatch) {
@@ -180,14 +214,12 @@ function requireAuth(req, res, next) {
   
   const session = sessions.get(token);
   
-  // Check if session is expired
   if (session.expires < Date.now()) {
     sessions.delete(token);
     return res.status(401).json({ error: 'Session telah kadaluarsa' });
   }
   
-  // Update session expiration
-  session.expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+  session.expires = Date.now() + (24 * 60 * 60 * 1000);
   sessions.set(token, session);
   
   req.user = session;
@@ -206,11 +238,10 @@ app.get('/chat.html', requireAuth, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'chat.html'));
 });
 
-// Auth status - IMPROVED
+// Auth status
 app.get('/api/auth/status', (req, res) => {
   let token = req.headers.authorization?.replace('Bearer ', '') || req.query.sessionId;
   
-  // Try to get from cookies
   if (!token && req.headers.cookie) {
     const cookieMatch = req.headers.cookie.match(/sessionId=([^;]+)/);
     if (cookieMatch) {
@@ -232,7 +263,7 @@ app.get('/api/auth/status', (req, res) => {
   });
 });
 
-// Register - IMPROVED dengan MongoDB
+// Register
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -249,11 +280,9 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Password minimal 6 karakter' });
     }
     
-    // Jika database tidak tersedia, gunakan session-based auth
     if (!db) {
       console.log('⚠️ Using session-based auth (no database)');
       
-      // Cek jika username sudah ada di sessions
       for (const session of sessions.values()) {
         if (session.username === username) {
           return res.status(400).json({ error: 'Username sudah digunakan' });
@@ -265,7 +294,7 @@ app.post('/api/auth/register', async (req, res) => {
         userId: generateSessionId(),
         username,
         isDeveloper: false,
-        expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+        expires: Date.now() + (24 * 60 * 60 * 1000)
       };
       
       sessions.set(sessionId, sessionData);
@@ -297,7 +326,7 @@ app.post('/api/auth/register', async (req, res) => {
       userId: result.insertedId.toString(),
       username,
       isDeveloper: false,
-      expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      expires: Date.now() + (24 * 60 * 60 * 1000)
     };
     
     sessions.set(sessionId, sessionData);
@@ -316,7 +345,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// Login - IMPROVED dengan MongoDB
+// Login
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -325,7 +354,6 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Username dan password harus diisi' });
     }
     
-    // Check developer credentials (dengan database)
     const developerUsername = process.env.DEVELOPER_USERNAME;
     const developerPassword = process.env.DEVELOPER_PASSWORD;
     
@@ -357,7 +385,7 @@ app.post('/api/auth/login', async (req, res) => {
         userId: developer?._id?.toString() || generateSessionId(),
         username: developerUsername,
         isDeveloper: true,
-        expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+        expires: Date.now() + (24 * 60 * 60 * 1000)
       };
       
       sessions.set(sessionId, sessionData);
@@ -371,20 +399,16 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
     
-    // Jika database tidak tersedia, gunakan session-based auth
     if (!db) {
       console.log('⚠️ Using session-based auth (no database)');
       
-      // Cari user di sessions
       for (const [sessionId, session] of sessions.entries()) {
         if (session.username === username) {
-          // Untuk session-based, kita terima password apa saja
-          // (ini hanya untuk fallback, tidak aman untuk production)
           const sessionData = {
             userId: session.userId,
             username: session.username,
             isDeveloper: session.isDeveloper,
-            expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+            expires: Date.now() + (24 * 60 * 60 * 1000)
           };
           
           sessions.set(sessionId, sessionData);
@@ -402,7 +426,6 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Username tidak ditemukan' });
     }
     
-    // Regular user login dengan database
     const user = await db.collection('users').findOne({ username });
     if (!user) {
       return res.status(400).json({ error: 'Username tidak ditemukan' });
@@ -418,7 +441,7 @@ app.post('/api/auth/login', async (req, res) => {
       userId: user._id.toString(),
       username: user.username,
       isDeveloper: user.isDeveloper || false,
-      expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      expires: Date.now() + (24 * 60 * 60 * 1000)
     };
     
     sessions.set(sessionId, sessionData);
@@ -437,11 +460,10 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Logout - IMPROVED
+// Logout
 app.post('/api/auth/logout', (req, res) => {
   let token = req.headers.authorization?.replace('Bearer ', '') || req.body.sessionId;
   
-  // Try to get from cookies
   if (!token && req.headers.cookie) {
     const cookieMatch = req.headers.cookie.match(/sessionId=([^;]+)/);
     if (cookieMatch) {
@@ -455,7 +477,7 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true, message: 'Logout berhasil' });
 });
 
-// Chat endpoint - FIXED with proper Gemini API integration
+// Chat endpoint - FIXED specifically for Gemini 2.0 Flash
 app.post('/api/chat', requireAuth, async (req, res) => {
   const { message } = req.body;
   const user = req.user;
@@ -464,161 +486,212 @@ app.post('/api/chat', requireAuth, async (req, res) => {
     return res.status(400).json({ error: "Pesan tidak boleh kosong" });
   }
 
-  let keyTried = [];
   const currentPrompt = user.isDeveloper ? DEVELOPER_PROMPT : USER_PROMPT;
   
-  while (true) {
+  // Try up to 3 times with different keys if needed
+  let attempts = 0;
+  const maxAttempts = apikeyData.keys.length || 3;
+  
+  while (attempts < maxAttempts) {
+    attempts++;
     const apiKey = getActiveKey();
     
     if (!apiKey) {
-      return res.status(500).json({ error: "Tidak ada API key yang tersedia" });
+      return res.status(500).json({ 
+        error: "Tidak ada API key yang tersedia. Silakan tambahkan key baru." 
+      });
     }
-    
-    keyTried.push(apiKey);
 
     try {
-      // Daftar model Gemini yang tersedia
-      const models = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro", 
-        "gemini-1.0-pro",
-        "gemini-pro"
-      ];
+      // Specifically use gemini-2.0-flash-exp as requested
+      const model = "gemini-2.0-flash-exp";
+      const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
       
-      let lastError = null;
-      let reply = null;
-      let usedModel = null;
-      
-      // Coba setiap model sampai berhasil
-      for (const model of models) {
-        try {
-          const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
-          
-          // Format request yang benar untuk Gemini API
-          const requestBody = {
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: currentPrompt + "\n\nUser: " + message }]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.9,
-              topK: 1,
-              topP: 1,
-              maxOutputTokens: 2048,
-            },
-            safetySettings: [
-              {
-                category: "HARM_CATEGORY_HARASSMENT",
-                threshold: "BLOCK_NONE"
-              },
-              {
-                category: "HARM_CATEGORY_HATE_SPEECH",
-                threshold: "BLOCK_NONE"
-              },
-              {
-                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                threshold: "BLOCK_NONE"
-              },
-              {
-                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold: "BLOCK_NONE"
-              }
-            ]
-          };
-
-          console.log(`🔄 Mencoba model: ${model} dengan key: ${apiKey.substring(0, 8)}...`);
-          
-          const response = await axios.post(GEMINI_API_URL, requestBody, {
-            headers: { 
-              'Content-Type': 'application/json',
-            },
-            timeout: 30000
-          });
-
-          // Parsing response yang benar
-          if (response.data && 
-              response.data.candidates && 
-              response.data.candidates[0] && 
-              response.data.candidates[0].content && 
-              response.data.candidates[0].content.parts && 
-              response.data.candidates[0].content.parts[0]) {
-            
-            reply = response.data.candidates[0].content.parts[0].text;
-            usedModel = model;
-            console.log(`✅ Berhasil menggunakan model: ${model}`);
-            break; // Keluar dari loop model jika berhasil
-          } else {
-            console.log(`⚠️ Response dari model ${model} tidak valid:`, JSON.stringify(response.data).substring(0, 200));
+      // Format yang benar untuk Gemini API
+      const requestBody = {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: currentPrompt + "\n\nUser: " + message }]
           }
-        } catch (modelError) {
-          lastError = modelError;
-          console.log(`❌ Model ${model} gagal:`, modelError.message);
-          if (modelError.response) {
-            console.log(`   Status: ${modelError.response.status}, Data:`, modelError.response.data);
+        ],
+        generationConfig: {
+          temperature: 0.9,
+          topK: 1,
+          topP: 1,
+          maxOutputTokens: 2048,
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_NONE"
           }
-          // Lanjut ke model berikutnya
-        }
-      }
+        ]
+      };
+
+      console.log(`🔄 Attempt ${attempts}: Using model: ${model} with key: ${apiKey.substring(0, 8)}...`);
       
-      // Jika semua model gagal
-      if (!reply) {
-        throw lastError || new Error("Semua model gagal merespons");
-      }
+      const response = await axios.post(GEMINI_API_URL, requestBody, {
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000
+      });
 
-      // Simpan chat history ke MongoDB jika database tersedia
-      if (db) {
-        try {
-          await db.collection('chats').insertOne({
-            userId: user.userId,
-            username: user.username,
-            message,
-            reply,
-            isDeveloper: user.isDeveloper,
-            model: usedModel,
-            createdAt: new Date()
-          });
-        } catch (dbError) {
-          console.error('Error saving chat to database:', dbError.message);
+      // Log response structure for debugging
+      console.log('✅ Gemini Response received:', {
+        hasCandidates: !!response.data.candidates,
+        candidatesCount: response.data.candidates?.length
+      });
+
+      // Parse response
+      if (response.data && 
+          response.data.candidates && 
+          response.data.candidates[0] && 
+          response.data.candidates[0].content && 
+          response.data.candidates[0].content.parts && 
+          response.data.candidates[0].content.parts[0]) {
+        
+        const reply = response.data.candidates[0].content.parts[0].text;
+        
+        // Save to database if available
+        if (db) {
+          try {
+            await db.collection('chats').insertOne({
+              userId: user.userId,
+              username: user.username,
+              message,
+              reply,
+              isDeveloper: user.isDeveloper,
+              model: model,
+              createdAt: new Date()
+            });
+          } catch (dbError) {
+            console.error('Error saving chat to database:', dbError.message);
+          }
         }
-      }
 
-      return res.json({ reply });
+        return res.json({ reply });
+      } else {
+        console.log('⚠️ Unexpected response structure:', JSON.stringify(response.data).substring(0, 300));
+        throw new Error('Invalid response structure from Gemini API');
+      }
 
     } catch (err) {
-      console.error('Gemini API Error Details:', {
+      // Detailed error logging
+      const errorDetails = {
         status: err.response?.status,
         statusText: err.response?.statusText,
         data: err.response?.data,
         message: err.message
-      });
+      };
       
-      // Cek jika error karena quota habis, key invalid, atau model tidak ditemukan
-      if (err.response?.status === 403 || err.response?.status === 401 || err.response?.status === 429 || err.response?.status === 404) {
-        blockKey(apiKey);
-        console.log(`🔴 Key ${apiKey.substring(0, 8)}... diblokir. Status: ${err.response?.status}`);
+      console.error(`❌ Attempt ${attempts} failed:`, errorDetails);
+      
+      // Check for quota or invalid key errors
+      if (err.response?.status === 429) {
+        // Quota exceeded
+        blockKey(apiKey, 'quota');
         
-        const remaining = apikeyData.keys.filter(k => !k.blocked).length;
-        console.log(`📊 Sisa key aktif: ${remaining}`);
-        
-        if (remaining === 0) {
+        // Check if this was the last key
+        if (apikeyData.keys.filter(k => !k.blocked).length === 0) {
           return res.status(500).json({ 
-            error: "Semua API key telah habis kuota atau tidak valid. Silakan tambahkan key baru." 
+            error: "Semua API key telah habis kuota. Silakan tunggu 1 jam atau tambah key baru." 
           });
         }
-        continue; // Coba dengan key berikutnya
+        // Continue to next key
+        continue;
+        
+      } else if (err.response?.status === 403 || err.response?.status === 401) {
+        // Invalid key
+        blockKey(apiKey, 'invalid');
+        
+        if (apikeyData.keys.filter(k => !k.blocked).length === 0) {
+          return res.status(500).json({ 
+            error: "Semua API key tidak valid. Silakan periksa key Anda." 
+          });
+        }
+        continue;
+        
+      } else if (err.response?.status === 404) {
+        // Model not found - try alternative model as fallback
+        console.log('⚠️ Model gemini-2.0-flash-exp not found, trying fallback models...');
+        
+        // Try fallback models
+        const fallbackModels = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+        let fallbackSuccess = false;
+        
+        for (const fallbackModel of fallbackModels) {
+          try {
+            const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/${fallbackModel}:generateContent?key=${apiKey}`;
+            const fallbackResponse = await axios.post(fallbackUrl, requestBody, {
+              headers: { 'Content-Type': 'application/json' },
+              timeout: 30000
+            });
+            
+            if (fallbackResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+              const reply = fallbackResponse.data.candidates[0].content.parts[0].text;
+              
+              console.log(`✅ Fallback to ${fallbackModel} successful`);
+              
+              // Save to database
+              if (db) {
+                await db.collection('chats').insertOne({
+                  userId: user.userId,
+                  username: user.username,
+                  message,
+                  reply,
+                  isDeveloper: user.isDeveloper,
+                  model: fallbackModel,
+                  createdAt: new Date()
+                }).catch(e => console.error('DB save error:', e.message));
+              }
+              
+              return res.json({ reply });
+            }
+          } catch (fallbackErr) {
+            console.log(`❌ Fallback ${fallbackModel} failed:`, fallbackErr.message);
+            continue;
+          }
+        }
+        
+        // If all fallbacks failed, block this key and try next
+        blockKey(apiKey, 'model_not_found');
+        continue;
+        
       } else {
-        // Error lain (timeout, network error, dll)
-        return res.status(500).json({ 
-          error: "Gagal terhubung ke AI service: " + (err.message || "Unknown error")
-        });
+        // Other errors (network, timeout, etc)
+        blockKey(apiKey, 'other');
+        
+        if (apikeyData.keys.filter(k => !k.blocked).length === 0) {
+          return res.status(500).json({ 
+            error: "Gagal terhubung ke AI service. Semua key diblokir." 
+          });
+        }
+        continue;
       }
     }
   }
+  
+  // If we've exhausted all attempts
+  return res.status(500).json({ 
+    error: "Gagal mendapatkan respons setelah mencoba semua API key yang tersedia." 
+  });
 });
 
-// Get chat history - IMPROVED dengan MongoDB
+// Get chat history
 app.get('/api/chat/history', requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -627,14 +700,12 @@ app.get('/api/chat/history', requireAuth, async (req, res) => {
       return res.json({ messages: [] });
     }
     
-    // Ambil chat history dari MongoDB
     const chats = await db.collection('chats')
       .find({ userId })
       .sort({ createdAt: -1 })
       .limit(50)
       .toArray();
     
-    // Format ulang data untuk client
     const messages = chats.reverse().map(chat => ({
       id: chat._id.toString(),
       message: chat.message,
@@ -649,7 +720,7 @@ app.get('/api/chat/history', requireAuth, async (req, res) => {
   }
 });
 
-// Clear chat history - NEW FUNCTIONALITY
+// Clear chat history
 app.delete('/api/chat/history', requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -667,7 +738,7 @@ app.delete('/api/chat/history', requireAuth, async (req, res) => {
   }
 });
 
-// Health check - IMPROVED dengan info database
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -678,16 +749,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Database status endpoint
-app.get('/api/db-status', (req, res) => {
-  res.json({
-    database: db ? 'Connected' : 'Disconnected',
-    mongodbUri: process.env.MONGODB_URI ? 'Set' : 'Not Set',
-    activeSessions: sessions.size
-  });
-});
-
-// API Keys status endpoint
+// API Keys status endpoint - HELPFUL FOR DEBUGGING
 app.get('/api/keys-status', (req, res) => {
   const totalKeys = apikeyData.keys.length;
   const activeKeys = apikeyData.keys.filter(k => !k.blocked).length;
@@ -699,9 +761,60 @@ app.get('/api/keys-status', (req, res) => {
     blocked: blockedKeys,
     keys: apikeyData.keys.map(k => ({
       prefix: k.key.substring(0, 8) + '...',
-      blocked: k.blocked
+      blocked: k.blocked,
+      lastError: k.lastError,
+      lastUsed: k.lastUsed ? new Date(k.lastUsed).toISOString() : null
     }))
   });
+});
+
+// Test API key endpoint - TO TEST INDIVIDUAL KEYS
+app.post('/api/test-key', async (req, res) => {
+  const { apiKey } = req.body;
+  
+  if (!apiKey) {
+    return res.status(400).json({ error: 'API key diperlukan' });
+  }
+  
+  try {
+    const testModel = "gemini-1.5-flash";
+    const testUrl = `https://generativelanguage.googleapis.com/v1/models/${testModel}:generateContent?key=${apiKey}`;
+    
+    const testBody = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: "Halo, balas dengan 'OK' saja" }]
+        }
+      ]
+    };
+    
+    const response = await axios.post(testUrl, testBody, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000
+    });
+    
+    if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      res.json({ 
+        success: true, 
+        message: 'API key valid',
+        response: response.data.candidates[0].content.parts[0].text
+      });
+    } else {
+      res.json({ 
+        success: false, 
+        message: 'API key merespons tapi format tidak valid',
+        data: response.data
+      });
+    }
+  } catch (err) {
+    res.json({ 
+      success: false, 
+      error: err.message,
+      status: err.response?.status,
+      data: err.response?.data
+    });
+  }
 });
 
 // Helper functions
@@ -733,9 +846,33 @@ async function startServer() {
     console.log(`🚀 Elaina AI Server running on port ${PORT}`);
     console.log(`📊 Active sessions: ${sessions.size}`);
     console.log(`🗄️ Database: ${db ? 'Connected' : 'Disconnected'}`);
-    console.log(`🔑 API Keys: ${apikeyData.keys.length} total, ${apikeyData.keys.filter(k => !k.blocked).length} active`);
+    console.log(`🔑 API Keys: ${apikeyData.keys.length} total`);
+    console.log(`🔓 Active Keys: ${apikeyData.keys.filter(k => !k.blocked).length}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    
+    // Test API key on startup
+    if (apikeyData.keys.length > 0) {
+      console.log('🔍 Testing first API key...');
+      const firstKey = apikeyData.keys[0].key;
+      testKeyOnStartup(firstKey);
+    }
   });
+}
+
+// Test key on startup (async but don't await)
+async function testKeyOnStartup(apiKey) {
+  try {
+    const testUrl = `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`;
+    const response = await axios.get(testUrl, { timeout: 5000 });
+    console.log('✅ API key test successful. Available models:', response.data.models?.length || 0);
+  } catch (err) {
+    console.log('⚠️ API key test failed:', err.message);
+    if (err.response?.status === 403) {
+      console.log('❌ API key is invalid or has no access');
+    } else if (err.response?.status === 429) {
+      console.log('❌ API key quota exceeded');
+    }
+  }
 }
 
 startServer().catch(console.error);
